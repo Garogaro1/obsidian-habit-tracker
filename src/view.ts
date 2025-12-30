@@ -1,11 +1,15 @@
-import { ItemView, WorkspaceLeaf, TFile, App } from 'obsidian';
+import { ItemView, WorkspaceLeaf, TFile, moment } from 'obsidian';
 import { generateCalendar, getMonthName } from './calendar';
 import { calculateStatistics, HabitStats, getNotesOnThisDay, getRandomQualityNote } from './stats';
 
 // Интерфейс плагина
 interface IHabitPlugin {
 	getDailyNotes(): TFile[];
-	settings: { dailyNotesFolder: string };
+	settings: {
+		dailyNotesFolder?: string; // legacy, для обратной совместимости
+		watchedFolders: string;
+		dateFormats: string;
+	};
 	app: any;
 }
 
@@ -37,6 +41,70 @@ export class HabitTrackerView extends ItemView {
 		this.dailyNotes = this.plugin.getDailyNotes();
 		this.stats = calculateStatistics(this.dailyNotes);
 		this.render();
+	}
+
+	/**
+	 * Извлечь дату из файла, используя настроенные форматы
+	 * Возвращает { date, type, originalFile } или null
+	 */
+	getDateFromFile(file: TFile): { date: moment.Moment; type: string; originalFile: TFile } | null {
+		const formats = this.plugin.settings.dateFormats
+			.split('\n')
+			.map(f => f.trim())
+			.filter(f => f.length > 0);
+
+		const name = file.name.replace(/\.md$/, '');
+
+		for (const format of formats) {
+			const m = moment(name, format, true);
+			if (m.isValid()) {
+				// Определяем тип заметки
+				const noteType = this.getNoteType(format);
+				// Конвертируем периодические заметки в конкретные даты
+				const convertedDate = this.convertPeriodicToDate(m, format);
+				return { date: convertedDate, type: noteType, originalFile: file };
+			}
+		}
+		return null;
+	}
+
+	/**
+	 * Определить тип заметки по формату
+	 */
+	getNoteType(format: string): string {
+		if (format.includes('gggg-[W]ww') || format.includes('GGGG-[W]WW')) return 'week';
+		if (format === 'YYYY-MM') return 'month';
+		if (format.includes('[Q]Q')) return 'quarter';
+		if (format === 'YYYY' || format === 'gggg') return 'year';
+		return 'day'; // Все дневные форматы
+	}
+
+	/**
+	 * Конвертировать периодические заметки в конкретные даты для календаря
+	 */
+	convertPeriodicToDate(date: moment.Moment, format: string): moment.Moment {
+		// Неделя (gggg-[W]ww) → понедельник этой недели
+		if (format.includes('gggg-[W]ww') || format.includes('GGGG-[W]WW')) {
+			return date.startOf('isoWeek'); // Понедельник
+		}
+
+		// Месяц (YYYY-MM) → 1-е число месяца
+		if (format === 'YYYY-MM') {
+			return date.startOf('month');
+		}
+
+		// Квартал (YYYY-[Q]Q) → 1-е число первого месяца квартала
+		if (format.includes('[Q]Q') || format.includes('[Q]Q')) {
+			return date.startOf('quarter');
+		}
+
+		// Год (YYYY) → 1 января
+		if (format === 'YYYY' || format === 'gggg') {
+			return date.startOf('year');
+		}
+
+		// Для дневных форматов просто возвращаем дату
+		return date;
 	}
 
 	render() {
@@ -148,11 +216,19 @@ export class HabitTrackerView extends ItemView {
 
 		const heatmapContainer = container.createEl('div', { cls: 'heatmap-container' });
 
-		// Создаем Set для быстрого поиска
-		const notesMap = new Set(this.dailyNotes.map(f => {
-			const m = f.name.match(/(\d{4}-\d{2}-\d{2})/);
-			return m ? m[1] : '';
-		}));
+		// Создаём Map для быстрого поиска: dateStr -> { type, file }
+		const notesMap = new Map<string, { type: string; file: TFile }>();
+
+		this.dailyNotes.forEach(file => {
+			const result = this.getDateFromFile(file);
+			if (result) {
+				const dateStr = result.date.format('YYYY-MM-DD');
+				// Если несколько файлов на одну дату, сохраняем все
+				if (!notesMap.has(dateStr)) {
+					notesMap.set(dateStr, { type: result.type, file: result.originalFile });
+				}
+			}
+		});
 
 		// Генерируем даты с начала ТЕКУЩЕГО выбранного года
 		const startOfYear = this.currentDate.clone().startOf('year');
@@ -173,15 +249,52 @@ export class HabitTrackerView extends ItemView {
 		for (let i = 0; i < daysInYear; i++) {
 			const date = startOfYear.clone().add(i, 'days');
 			const dateStr = date.format('YYYY-MM-DD');
-			const hasNote = notesMap.has(dateStr);
+			const noteInfo = notesMap.get(dateStr);
+
+			// Определяем CSS класс на основе типа заметки
+			let typeClass = '';
+			let typeIcon = '📝';
+			if (noteInfo) {
+				switch (noteInfo.type) {
+					case 'day':
+						typeClass = 'type-day';
+						typeIcon = '📅';
+						break;
+					case 'week':
+						typeClass = 'type-week';
+						typeIcon = '📆';
+						break;
+					case 'month':
+						typeClass = 'type-month';
+						typeIcon = '🗓️';
+						break;
+					case 'quarter':
+						typeClass = 'type-quarter';
+						typeIcon = '📊';
+						break;
+					case 'year':
+						typeClass = 'type-year';
+						typeIcon = '🎯';
+						break;
+				}
+			}
 
 			const dayEl = grid.createEl('div', {
-				cls: `heatmap-day ${hasNote ? 'active' : ''}`,
-				attr: { 'aria-label': `${date.format('D MMM YYYY')} ${hasNote ? '✅' : '❌'}` }
+				cls: `heatmap-day ${noteInfo ? 'active ' + typeClass : ''}`,
+				attr: { 'aria-label': `${date.format('D MMM YYYY')} ${noteInfo ? typeIcon : '❌'}` }
 			});
 
-			if (hasNote) {
-				dayEl.onclick = () => this.openDailyNote(dateStr);
+			if (noteInfo) {
+				// При наведении показываем превью содержимого
+				dayEl.onmouseenter = async () => {
+					const content = await this.plugin.app.vault.read(noteInfo.file);
+					const preview = content.slice(0, 150).replace(/[#*`]/g, '');
+					dayEl.setAttribute('data-preview', preview + (content.length > 150 ? '...' : ''));
+				};
+
+				dayEl.onclick = () => {
+					this.plugin.app.workspace.openLinkText(noteInfo.file.path, '', true);
+				};
 			}
 		}
 	}
@@ -202,25 +315,52 @@ export class HabitTrackerView extends ItemView {
 
 		// Дни
 		const calendarDays = generateCalendar(date);
-		const notesMap = new Map<string, TFile>();
+
+		// Map: дата (YYYY-MM-DD) -> { type, file }
+		const notesMap = new Map<string, { type: string; file: TFile }>();
 		this.dailyNotes.forEach((file) => {
-			const match = file.name.match(/(\d{4}-\d{2}-\d{2})\.md/);
-			if (match) notesMap.set(match[1], file);
+			const result = this.getDateFromFile(file);
+			if (result) {
+				const dateStr = result.date.format('YYYY-MM-DD');
+				if (!notesMap.has(dateStr)) {
+					notesMap.set(dateStr, { type: result.type, file: result.originalFile });
+				}
+			}
 		});
+
 		const today = window.moment().format('YYYY-MM-DD');
 
 		calendarDays.forEach((day) => {
 			const dayEl = grid.createEl('div', { cls: 'calendar-day' });
 			if (day) {
 				const dateStr = day.format('YYYY-MM-DD');
-				const note = notesMap.get(dateStr);
+				const noteInfo = notesMap.get(dateStr);
 
 				dayEl.createEl('div', { cls: 'calendar-day-number', text: day.date().toString() });
 
-				if (note) dayEl.addClass('calendar-day-with-note');
+				// Добавляем класс в зависимости от типа заметки
+				if (noteInfo) {
+					dayEl.addClass(`calendar-day-with-note type-${noteInfo.type}`);
+
+					// При наведении показываем превью
+					dayEl.onmouseenter = async () => {
+						const content = await this.plugin.app.vault.read(noteInfo.file);
+						const preview = content.slice(0, 150).replace(/[#*`]/g, '');
+						dayEl.setAttribute('data-preview', preview + (content.length > 150 ? '...' : ''));
+					};
+				}
+
 				if (dateStr === today) dayEl.addClass('calendar-day-today');
 
-				dayEl.onclick = () => this.openDailyNote(dateStr);
+				// Если есть заметка - открываем её, если нет - создаём новую
+				dayEl.onclick = () => {
+					if (noteInfo) {
+						this.plugin.app.workspace.openLinkText(noteInfo.file.path, '', true);
+					} else {
+						this.openDailyNote(dateStr);
+					}
+				};
+
 				// Тултип с датой
 				dayEl.ariaLabel = dateStr;
 			}
@@ -230,8 +370,45 @@ export class HabitTrackerView extends ItemView {
 	renderStatistics(container: HTMLElement) {
 		const statsBox = container.createEl('div', { cls: 'stats-container' });
 		statsBox.createEl('h3', { text: '📈 Прогресс' });
-		statsBox.createEl('p', { cls: 'stat-item' }).innerHTML = `<strong>Серия:</strong> ${this.stats.currentStreak} дн. 🔥`;
-		statsBox.createEl('p', { cls: 'stat-item' }).innerHTML = `<strong>Последняя:</strong> ${this.stats.lastNoteDate}`;
+
+		// Подсчет заметок по типам
+		const typeCounts = { day: 0, week: 0, month: 0, quarter: 0, year: 0 };
+		this.dailyNotes.forEach(file => {
+			const result = this.getDateFromFile(file);
+			if (result && typeCounts[result.type as keyof typeof typeCounts] !== undefined) {
+				typeCounts[result.type as keyof typeof typeCounts]++;
+			}
+		});
+
+		// Базовые метрики
+		statsBox.createEl('p', { cls: 'stat-item' }).innerHTML = `<strong>🔥 Текущая серия:</strong> ${this.stats.currentStreak} дн.`;
+		statsBox.createEl('p', { cls: 'stat-item' }).innerHTML = `<strong>📅 Последняя запись:</strong> ${this.stats.lastNoteDate}`;
+		statsBox.createEl('p', { cls: 'stat-item' }).innerHTML = `<strong>⏰ Прошло времени:</strong> ${this.stats.timeSinceLastNote}`;
+
+		// Разделитель
+		statsBox.createEl('hr', { cls: 'stat-divider' });
+
+		// Детализация по типам
+		statsBox.createEl('p', { cls: 'stat-item stat-header' }).innerHTML = '<strong>📊 Заметки по типам:</strong>';
+		statsBox.createEl('p', { cls: 'stat-item stat-type-day' }).innerHTML = `📅 Дневные: <strong>${typeCounts.day}</strong>`;
+		statsBox.createEl('p', { cls: 'stat-item stat-type-week' }).innerHTML = `📆 Недельные: <strong>${typeCounts.week}</strong>`;
+		statsBox.createEl('p', { cls: 'stat-item stat-type-month' }).innerHTML = `🗓️ Месячные: <strong>${typeCounts.month}</strong>`;
+		statsBox.createEl('p', { cls: 'stat-item stat-type-quarter' }).innerHTML = `📊 Квартальные: <strong>${typeCounts.quarter}</strong>`;
+		statsBox.createEl('p', { cls: 'stat-item stat-type-year' }).innerHTML = `🎯 Годовые: <strong>${typeCounts.year}</strong>`;
+
+		// Всего заметок
+		statsBox.createEl('hr', { cls: 'stat-divider' });
+		statsBox.createEl('p', { cls: 'stat-item' }).innerHTML = `<strong>📝 Всего заметок:</strong> ${this.dailyNotes.length}`;
+
+		// Процент заполнения за год
+		const yearStart = window.moment().startOf('year');
+		const yearEnd = window.moment().endOf('year');
+		const daysInYear = yearEnd.diff(yearStart, 'days') + 1;
+		const daysPassed = window.moment().diff(yearStart, 'days') + 1;
+		const dayNotes = typeCounts.day;
+		const fillPercentage = daysPassed > 0 ? Math.round((dayNotes / daysPassed) * 100) : 0;
+
+		statsBox.createEl('p', { cls: 'stat-item' }).innerHTML = `<strong>📈 Заполнение года:</strong> ${fillPercentage}%`;
 	}
 
 	// === НОВЫЙ МОДУЛЬ РЕТРОСПЕКТИВЫ ===
@@ -278,25 +455,40 @@ export class HabitTrackerView extends ItemView {
 		const content = await this.plugin.app.vault.read(file);
 		container.empty();
 
-		if (title) container.createEl('h4', { cls: 'preview-date', text: title });
+		if (title) {
+			const titleEl = container.createEl('h4', { cls: 'preview-date' });
+			titleEl.textContent = title;
+		}
 
-		const maxLength = 300;
-		const cleanText = content.replace(/^#+\s/gm, '').replace(/[*_]/g, '').slice(0, maxLength) + '...';
+		// Показываем всю заметку, а не кусочек
+		const contentEl = container.createEl('div', { cls: 'preview-content' });
+		contentEl.textContent = content;
 
-		container.createEl('p', { text: cleanText, cls: 'preview-text-p' });
-
-		const btn = container.createEl('button', { cls: 'preview-open-button', text: 'Читать полностью' });
+		// Кнопка "Открыть в Obsidian" для перехода к заметке
+		const btn = container.createEl('button', { cls: 'preview-open-button', text: '📂 Открыть в Obsidian' });
 		btn.onclick = () => this.plugin.app.workspace.openLinkText(file.path, '', true);
 	}
 
 	async openDailyNote(dateStr: string) {
-		const { dailyNotesFolder } = this.plugin.settings;
-		const notePath = `${dailyNotesFolder}/${dateStr}.md`;
+		// Используем первую папку и первый формат из настроек
+		const folders = this.plugin.settings.watchedFolders.split('\n').map(f => f.trim()).filter(f => f.length > 0);
+		const formats = this.plugin.settings.dateFormats.split('\n').map(f => f.trim()).filter(f => f.length > 0);
+
+		const folder = folders[0] || 'Daily Notes';
+		const format = formats[0] || 'YYYY-MM-DD';
+
+		// Формируем имя файла из даты
+		const fileName = moment(dateStr).format(format);
+		const notePath = `${folder}/${fileName}.md`;
 		const file = this.plugin.app.vault.getAbstractFileByPath(notePath);
 
 		if (file instanceof TFile) {
 			await this.plugin.app.workspace.openLinkText(notePath, '', true);
 		} else {
+			// Создаём папку, если не существует
+			if (!this.plugin.app.vault.getAbstractFileByPath(folder)) {
+				await this.plugin.app.vault.createFolder(folder);
+			}
 			await this.plugin.app.vault.create(notePath, '');
 			await this.plugin.app.workspace.openLinkText(notePath, '', true);
 			this.updateData();
