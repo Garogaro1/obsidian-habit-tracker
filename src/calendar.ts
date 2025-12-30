@@ -32,8 +32,9 @@ export function generateCalendar(date: moment.Moment): (moment.Moment | null)[] 
 	// Первый день месяца
 	const firstDay = window.moment([year, month, 1]);
 
-	// Последний день месяца
-	const lastDay = window.moment([year, month + 1, 0]).subtract(1, 'day');
+	// Последний день месяца - ИСПРАВЛЕНО для декабря
+	// Используем clone().endOf('month') вместо ручного вычисления
+	const lastDay = date.clone().endOf('month');
 
 	// День недели первого дня месяца (0-6, где 0 = воскресенье)
 	// В России неделя начинается с понедельника, поэтому конвертируем

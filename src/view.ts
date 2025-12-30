@@ -1,21 +1,32 @@
-import { ItemView, WorkspaceLeaf, TFile } from 'obsidian';
-import HabitTrackerPlugin from '../main';
+import { ItemView, WorkspaceLeaf, TFile, App } from 'obsidian';
 import { generateCalendar, getMonthName } from './calendar';
 import { calculateStatistics, HabitStats } from './stats';
+
+// Интерфейс для избежания circular dependency
+interface IHabitTrackerPlugin {
+	getDailyNotes(): TFile[];
+	settings: { dailyNotesFolder: string };
+	app: App;
+}
 
 export const VIEW_TYPE_HABIT_TRACKER = 'habit-tracker-view';
 
 export class HabitTrackerView extends ItemView {
-	plugin: HabitTrackerPlugin;
+	plugin: IHabitTrackerPlugin;
 	currentDate: moment.Moment;
 	dailyNotes: TFile[];
 	stats: HabitStats;
 
-	constructor(leaf: WorkspaceLeaf, plugin: HabitTrackerPlugin) {
+	constructor(leaf: WorkspaceLeaf, plugin: IHabitTrackerPlugin) {
 		super(leaf);
 		this.plugin = plugin;
 		this.currentDate = window.moment();
-		this.updateData();
+		this.dailyNotes = [];
+		this.stats = {
+			lastNoteDate: '',
+			currentStreak: 0,
+			timeSinceLastNote: 'Нет записей'
+		};
 	}
 
 	getViewType() {
@@ -28,14 +39,18 @@ export class HabitTrackerView extends ItemView {
 
 	async onOpen() {
 		const container = this.containerEl.children[1];
+		if (!container) return;
+
 		container.empty();
 		container.addClass('habit-tracker-container');
 
-		this.render();
+		// Загружаем данные при открытии
+		this.updateData();
 	}
 
 	async onClose() {
 		// Cleanup
+		this.dailyNotes = [];
 	}
 
 	updateData() {
@@ -45,7 +60,9 @@ export class HabitTrackerView extends ItemView {
 	}
 
 	render() {
-		const container = this.containerEl.children[1];
+		const container = this.containerEl.children[1] as HTMLElement;
+		if (!container) return;
+
 		container.empty();
 
 		// Заголовок
