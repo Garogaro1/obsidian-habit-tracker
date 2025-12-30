@@ -1,191 +1,215 @@
-/* Контейнер плагина */
+/* Основной контейнер */
 .habit-tracker-container {
 	padding: 20px;
 	height: 100%;
 	overflow-y: auto;
-}
-
-/* Заголовок */
-.habit-tracker-header {
-	text-align: center;
-	margin-bottom: 20px;
+	font-family: var(--font-interface);
 }
 
 .habit-tracker-header h2 {
-	margin: 0;
+	text-align: center;
 	color: var(--text-accent);
-	font-size: 24px;
+	margin-bottom: 25px;
 }
 
-/* Основной контент */
-.habit-tracker-main {
+/* Навигация по месяцам */
+.panorama-nav {
 	display: flex;
-	flex-direction: column;
-	gap: 30px;
+	gap: 10px;
+	margin-bottom: 20px;
+	justify-content: center;
 }
 
-/* Календарь */
-.calendar-container {
+.panorama-nav-btn {
+	padding: 8px 16px;
+	background: var(--interactive-normal);
+	border: none;
+	color: var(--text-normal);
+	border-radius: 4px;
+	cursor: pointer;
+	font-size: 13px;
+	transition: background 0.2s;
+}
+
+.panorama-nav-btn:hover {
+	background: var(--interactive-hover);
+}
+
+.panorama-today-btn {
+	background: var(--interactive-accent);
+	color: var(--text-on-accent);
+	font-weight: bold;
+}
+
+.panorama-today-btn:hover {
+	background: var(--interactive-accent-hover);
+}
+
+/* 1. Сетка календарей (Панорама) */
+.calendars-grid {
+	display: grid;
+	grid-template-columns: repeat(auto-fit, minmax(220px, 1fr)); /* Адаптивная сетка */
+	gap: 15px;
+	margin-bottom: 30px;
+}
+
+.month-unit {
 	background: var(--background-secondary);
-	padding: 20px;
+	padding: 10px;
 	border-radius: 8px;
 	border: 1px solid var(--background-modifier-border);
 }
 
-/* Навигация по календарю */
-.calendar-nav {
-	display: flex;
-	justify-content: space-between;
-	align-items: center;
-	margin-bottom: 20px;
-}
-
-.calendar-month-title {
-	margin: 0;
-	font-size: 18px;
+.month-label {
+	text-align: center;
+	margin: 5px 0 10px;
 	color: var(--text-normal);
+	font-size: 14px;
 }
 
-.calendar-nav-button {
-	background: var(--interactive-normal);
-	border: none;
-	color: var(--text-normal);
-	padding: 5px 10px;
-	border-radius: 4px;
-	cursor: pointer;
-	font-size: 16px;
-	transition: background 0.2s;
-}
-
-.calendar-nav-button:hover {
-	background: var(--interactive-hover);
-}
-
-/* Layout с календарём и превью */
-.calendar-layout {
-	display: flex;
-	gap: 20px;
-	flex-wrap: wrap;
-}
-
-.calendar-grid-wrapper {
-	flex: 1;
-	min-width: 280px;
-}
-
-/* Сетка календаря */
-.calendar-grid {
+/* Мини-сетка дней */
+.calendar-grid.mini {
 	display: grid;
 	grid-template-columns: repeat(7, 1fr);
-	gap: 5px;
-	margin-bottom: 15px;
+	gap: 2px;
 }
 
 .calendar-day-header {
+	font-size: 10px;
 	text-align: center;
-	font-weight: bold;
 	color: var(--text-muted);
-	font-size: 14px;
-	padding: 5px;
+	padding: 3px 0;
 }
 
 .calendar-day {
-	min-height: 50px;
+	aspect-ratio: 1; /* Квадратные ячейки */
 	display: flex;
 	align-items: center;
 	justify-content: center;
-	padding: 8px;
-	border-radius: 4px;
+	border-radius: 3px;
+	font-size: 11px;
 	cursor: pointer;
-	transition: all 0.2s;
-	font-size: 14px;
-	color: var(--text-normal);
 	background: var(--background-primary);
-	border: 1px solid var(--background-modifier-border);
-	position: relative;
-}
-
-.calendar-day-number {
-	font-weight: 500;
+	transition: transform 0.1s;
+	color: var(--text-normal);
 }
 
 .calendar-day:hover {
-	background: var(--background-modifier-hover);
-	transform: scale(1.05);
+	transform: scale(1.1);
+	z-index: 2;
+	border: 1px solid var(--text-accent);
 }
 
 .calendar-day-with-note {
-	background: #4caf50;
+	background-color: #4caf50; /* Зелёный для дней с заметками */
 	color: white;
 	font-weight: bold;
 }
 
 .calendar-day-with-note:hover {
-	background: #45a049;
+	background-color: #45a049;
 }
 
 .calendar-day-today {
-	border: 2px solid #2196f3;
-	box-shadow: 0 0 5px rgba(33, 150, 243, 0.5);
+	border: 2px solid #2196f3; /* Синий для сегодняшнего дня */
+	box-shadow: 0 0 3px rgba(33, 150, 243, 0.5);
 }
 
-/* Панель превью */
-.preview-panel {
-	flex: 0 0 300px;
-	background: var(--background-primary);
+/* 2. Сайдбар и Блоки (Ретроспектива и Статистика) */
+.tracker-sidebar {
+	display: grid;
+	grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+	gap: 20px;
+}
+
+.stats-container, .memory-box {
+	background: var(--background-secondary);
 	padding: 15px;
 	border-radius: 8px;
 	border: 1px solid var(--background-modifier-border);
-	max-height: 400px;
-	overflow-y: auto;
 }
 
-.preview-title {
+.stats-container h3, .memory-box h3 {
 	margin: 0 0 15px 0;
 	font-size: 16px;
 	color: var(--text-normal);
-	border-bottom: 1px solid var(--background-modifier-border);
-	padding-bottom: 10px;
 }
 
-.preview-content {
-	min-height: 200px;
+/* Стили блока воспоминаний */
+.memory-box {
+	border-left: 4px solid #9b59b6; /* Фиолетовая акцентная линия */
+}
+
+.retro-header {
+	display: flex;
+	justify-content: space-between;
+	align-items: center;
+	margin-bottom: 15px;
+}
+
+.retro-controls {
+	display: flex;
+	gap: 10px;
+	margin-bottom: 15px;
+}
+
+.retro-btn {
+	flex: 1;
+	font-size: 12px;
+	padding: 6px 10px;
+	background: var(--interactive-normal);
+	border: none;
+	color: var(--text-normal);
+	border-radius: 4px;
+	cursor: pointer;
+	transition: background 0.2s;
+}
+
+.retro-btn:hover {
+	background: var(--interactive-hover);
+}
+
+.memory-preview {
+	background: var(--background-primary);
+	padding: 15px;
+	border-radius: 6px;
+	min-height: 100px;
 }
 
 .preview-empty {
 	color: var(--text-muted);
 	text-align: center;
-	padding: 40px 20px;
 	font-style: italic;
+	font-size: 13px;
 }
 
 .preview-date {
-	margin: 0 0 10px 0;
-	font-size: 14px;
 	color: var(--text-accent);
-}
-
-.preview-text {
-	margin-bottom: 15px;
-}
-
-.preview-text p {
-	margin: 0 0 10px 0;
+	margin-top: 0;
 	font-size: 13px;
-	line-height: 1.6;
-	color: var(--text-normal);
+	border-bottom: 1px solid var(--background-modifier-border);
+	padding-bottom: 5px;
+	margin-bottom: 10px;
+}
+
+.preview-text-p {
+	font-size: 13px;
+	line-height: 1.5;
+	font-style: italic;
+	color: var(--text-muted);
+	margin: 0 0 10px 0;
 	white-space: pre-wrap;
 }
 
 .preview-open-button {
 	width: 100%;
+	padding: 8px;
 	background: var(--interactive-accent);
 	color: var(--text-on-accent);
 	border: none;
-	padding: 8px 16px;
 	border-radius: 4px;
 	cursor: pointer;
-	font-size: 14px;
+	font-size: 13px;
 	transition: background 0.2s;
 }
 
@@ -193,42 +217,13 @@
 	background: var(--interactive-accent-hover);
 }
 
-/* Легенда */
-.calendar-legend {
-	display: flex;
-	gap: 15px;
-	flex-wrap: wrap;
-	justify-content: center;
-	margin-top: 15px;
-	padding-top: 15px;
-	border-top: 1px solid var(--background-modifier-border);
-}
-
-.legend-item {
-	font-size: 12px;
-	color: var(--text-muted);
-}
-
 /* Статистика */
-.stats-container {
-	background: var(--background-secondary);
-	padding: 20px;
-	border-radius: 8px;
-	border: 1px solid var(--background-modifier-border);
-}
-
-.stats-container h3 {
-	margin: 0 0 15px 0;
-	font-size: 18px;
-	color: var(--text-normal);
-}
-
 .stat-item {
 	margin: 10px 0;
-	padding: 10px;
+	padding: 8px;
 	background: var(--background-primary);
 	border-radius: 4px;
-	font-size: 14px;
+	font-size: 13px;
 	color: var(--text-normal);
 }
 
@@ -238,32 +233,141 @@
 
 /* Адаптивность для мобильных */
 @media (max-width: 768px) {
-	.calendar-layout {
-		flex-direction: column;
+	.calendars-grid {
+		grid-template-columns: 1fr; /* Одна колонка на мобильных */
 	}
 
-	.preview-panel {
-		flex: none;
-		width: 100%;
-		max-height: 300px;
-	}
-
-	.calendar-day {
-		min-height: 40px;
-		font-size: 12px;
-		padding: 5px;
+	.tracker-sidebar {
+		grid-template-columns: 1fr;
 	}
 
 	.habit-tracker-container {
 		padding: 10px;
 	}
+}
 
-	.calendar-container,
-	.stats-container {
-		padding: 15px;
-	}
+/* --- Стили для переключателя и Heatmap --- */
 
-	.calendar-month-title {
-		font-size: 16px;
-	}
+/* Заголовок с кнопками */
+.header-row {
+	display: flex;
+	justify-content: space-between;
+	align-items: center;
+	margin-bottom: 20px;
+}
+.header-row h2 { margin: 0; }
+
+.mode-switcher {
+	background: var(--background-secondary-alt);
+	padding: 3px;
+	border-radius: 6px;
+	display: flex;
+	gap: 5px;
+}
+
+.mode-btn {
+	background: transparent;
+	border: none;
+	padding: 4px 12px;
+	font-size: 12px;
+	cursor: pointer;
+	border-radius: 4px;
+	color: var(--text-muted);
+}
+
+.mode-btn.active {
+	background: var(--interactive-accent);
+	color: var(--text-on-accent);
+	font-weight: bold;
+}
+
+/* Навигация по годам в Heatmap */
+.heatmap-nav {
+	display: flex;
+	justify-content: space-between;
+	align-items: center;
+	margin-bottom: 15px;
+	padding: 0 10px;
+}
+
+.heatmap-nav-btn {
+	padding: 6px 12px;
+	background: var(--interactive-normal);
+	border: none;
+	color: var(--text-normal);
+	border-radius: 4px;
+	cursor: pointer;
+	font-size: 12px;
+	transition: background 0.2s;
+}
+
+.heatmap-nav-btn:hover {
+	background: var(--interactive-hover);
+}
+
+.heatmap-year-title {
+	margin: 0;
+	font-size: 18px;
+	color: var(--text-accent);
+	text-align: center;
+	flex: 1;
+}
+
+/* Контейнер Heatmap */
+.heatmap-container {
+	background: var(--background-secondary);
+	padding: 15px;
+	border-radius: 8px;
+	border: 1px solid var(--background-modifier-border);
+	margin-bottom: 30px;
+	overflow-x: auto; /* На случай маленьких экранов */
+}
+
+/* Сетка Heatmap */
+.heatmap-grid {
+	display: grid;
+	grid-template-columns: repeat(53, 1fr);
+	gap: 3px;
+}
+
+.heatmap-day {
+	aspect-ratio: 1;
+	background-color: var(--background-modifier-border);
+	border-radius: 2px;
+	cursor: pointer;
+}
+
+.heatmap-day.empty {
+	background-color: transparent;
+	pointer-events: none;
+}
+
+.heatmap-day:hover {
+	border: 1px solid var(--text-muted);
+}
+
+/* Уровни активности */
+.heatmap-day.active {
+	background-color: #4caf50; /* Зелёный для активных дней */
+}
+
+/* Тултип (подсказка) */
+[aria-label] {
+	position: relative;
+}
+[aria-label]:hover::after {
+	content: attr(aria-label);
+	position: absolute;
+	bottom: 100%;
+	left: 50%;
+	transform: translateX(-50%);
+	background: var(--background-primary);
+	color: var(--text-normal);
+	padding: 4px 8px;
+	border-radius: 4px;
+	font-size: 11px;
+	white-space: nowrap;
+	box-shadow: 0 2px 8px rgba(0,0,0,0.2);
+	z-index: 10;
+	pointer-events: none;
 }

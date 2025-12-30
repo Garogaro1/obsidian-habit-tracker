@@ -131,3 +131,34 @@ function getHoursSuffix(hours: number): string {
 			return 'ов';
 	}
 }
+
+// === НОВЫЕ ФУНКЦИИ ДЛЯ РЕТРОСПЕКТИВЫ ===
+
+/**
+ * Найти заметки, созданные в этот день (MM-DD) в прошлые годы
+ */
+export function getNotesOnThisDay(notes: TFile[]): TFile[] {
+	const todayMonthDay = window.moment().format('MM-DD');
+	return notes.filter(file => {
+		// Ищем файлы, где месяц и день совпадают, а год - любой
+		return file.name.includes(todayMonthDay);
+	});
+}
+
+/**
+ * Получить случайную "качественную" заметку (длиннее 50 символов)
+ */
+export async function getRandomQualityNote(app: any, notes: TFile[]): Promise<TFile | null> {
+	if (notes.length === 0) return null;
+
+	// Пробуем найти длинную заметку (до 10 попыток), чтобы не зависать
+	for (let i = 0; i < 10; i++) {
+		const randomNote = notes[Math.floor(Math.random() * notes.length)];
+		const content = await app.vault.read(randomNote);
+		if (content.length > 50) { // Критерий качества: > 50 символов
+			return randomNote;
+		}
+	}
+	// Если не нашли длинную, возвращаем любую
+	return notes[Math.floor(Math.random() * notes.length)];
+}
