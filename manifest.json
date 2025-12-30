@@ -1,0 +1,10 @@
+{
+	"id": "habit-tracker",
+	"name": "Трекер Привычек",
+	"version": "1.0.0",
+	"minAppVersion": "0.15.0",
+	"description": "Календарь и статистика для daily notes с трекингом привычек",
+	"author": "Ivan Zhukov",
+	"authorUrl": "https://github.com",
+	"isDesktopOnly": false
+}
