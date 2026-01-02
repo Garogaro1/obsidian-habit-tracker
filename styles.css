@@ -49,6 +49,48 @@
     justify-content: space-between;
     margin-bottom: 15px;
 }
+.panorama-quarter-note {
+    margin-bottom: 15px;
+}
+.quarter-card-pano {
+    background: var(--background-secondary);
+    padding: 12px 15px;
+    border-radius: 8px;
+    border: 2px solid var(--background-modifier-border);
+    cursor: pointer;
+    transition: all 0.2s;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+}
+.quarter-card-pano:hover {
+    border-color: var(--interactive-accent);
+    background: var(--background-modifier-hover);
+}
+.quarter-with-note-pano {
+    border-color: var(--color-orange);
+    background: linear-gradient(135deg, var(--background-secondary) 0%, rgba(255, 152, 0, 0.1) 100%);
+}
+.quarter-empty-pano {
+    opacity: 0.7;
+}
+.quarter-title-pano {
+    font-size: 14px;
+    font-weight: bold;
+    color: var(--text-normal);
+}
+.quarter-badge-pano {
+    font-size: 12px;
+    padding: 4px 10px;
+    border-radius: 4px;
+    background: var(--color-green);
+    color: white;
+    font-weight: bold;
+}
+.quarter-empty-badge-pano {
+    background: var(--background-modifier-border);
+    color: var(--text-muted);
+}
 .calendars-grid {
     display: grid;
     grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
@@ -61,16 +103,48 @@
     border-radius: 8px;
     border: 1px solid var(--background-modifier-border);
 }
+.month-header-row {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 10px;
+}
 .month-label {
-    text-align: center;
-    margin: 5px 0 10px;
+    margin: 0;
     color: var(--text-normal);
+    flex: 1;
+}
+.month-note-icon {
+    font-size: 16px;
+    padding: 4px 8px;
+    border-radius: 4px;
+    cursor: pointer;
+    transition: all 0.2s;
+    min-width: 28px;
+    text-align: center;
+}
+.month-note-icon:hover {
+    background: var(--background-modifier-hover);
+    transform: scale(1.1);
+}
+.month-note-exists {
+    color: var(--color-blue);
+}
+.month-note-empty {
+    color: var(--text-muted);
+    font-size: 18px;
+    font-weight: bold;
 }
 
 /* Сетка дней */
 .calendar-grid.mini {
     display: grid;
     grid-template-columns: repeat(7, 1fr);
+    gap: 2px;
+}
+.calendar-grid.mini-with-weeks {
+    display: grid;
+    grid-template-columns: repeat(7, 1fr) 30px;
     gap: 2px;
 }
 .calendar-day-header {
@@ -126,6 +200,67 @@
     box-shadow: inset 0 0 0 2px var(--text-accent);
 }
 
+/* Недельные ячейки справа от календаря */
+.calendar-week-cell {
+    aspect-ratio: 1;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    border-radius: 3px;
+    font-size: 9px;
+    cursor: pointer;
+    background: var(--background-primary);
+    position: relative;
+    transition: all 0.2s;
+}
+.calendar-week-cell:hover {
+    background: var(--background-modifier-hover);
+}
+.calendar-week-cell.empty {
+    background: transparent;
+    cursor: default;
+}
+.week-cell-with-note {
+    background: var(--color-purple);
+    color: white;
+    font-weight: bold;
+}
+.week-cell-empty {
+    color: var(--text-muted);
+    opacity: 0.6;
+}
+.week-cell-empty:hover {
+    opacity: 1;
+    background: var(--background-modifier-border);
+}
+
+/* Недельные badges в месяце (старый стиль, не используется) */
+.month-weeks-badges {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 4px;
+    margin-top: 10px;
+    padding-top: 8px;
+    border-top: 1px solid var(--background-modifier-border);
+}
+.week-badge-month {
+    font-size: 9px;
+    padding: 3px 6px;
+    border-radius: 3px;
+    background: var(--background-modifier-border);
+    color: var(--text-muted);
+    cursor: pointer;
+    transition: all 0.2s;
+}
+.week-badge-month:hover {
+    background: var(--background-modifier-hover);
+}
+.week-badge-month.week-with-note-month {
+    background: var(--color-purple);
+    color: white;
+    font-weight: bold;
+}
+
 /* --- HEATMAP (Год) --- */
 .heatmap-container {
     overflow-x: auto;
@@ -155,6 +290,12 @@
     flex-direction: column;
     gap: 20px;
     margin-top: 20px;
+    height: 100%;
+}
+
+.tracker-sidebar.sidebar-retro-only {
+    flex: 1;
+    height: 100%;
 }
 .stats-container, .memory-box {
     background: var(--background-secondary);
@@ -196,18 +337,88 @@
     padding-left: 8px;
 }
 
+/* Секция года в статистике */
+.stat-year-section {
+    margin: 10px 0;
+    padding: 8px;
+    background: var(--background-primary);
+    border-radius: 4px;
+    border: 1px solid var(--background-modifier-border);
+}
+.stat-header-year {
+    font-size: 13px;
+    font-weight: bold;
+    color: var(--text-normal);
+    margin: 5px 0;
+}
+
+/* Компактный горизонтальный блок года */
+.stat-year-compact {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    gap: 6px;
+    margin: 10px 0;
+    padding: 8px;
+    background: var(--background-primary);
+    border-radius: 4px;
+    border: 1px solid var(--background-modifier-border);
+}
+.stat-year-label {
+    font-size: 13px;
+    font-weight: bold;
+    color: var(--text-normal);
+    margin-right: 4px;
+}
+.stat-badge {
+    font-size: 11px;
+    padding: 3px 8px;
+    border-radius: 3px;
+    background: var(--background-modifier-border);
+    color: var(--text-normal);
+    border-left: 2px solid;
+}
+.stat-badge.stat-type-day { border-left-color: var(--color-green); }
+.stat-badge.stat-type-week { border-left-color: var(--color-purple); }
+.stat-badge.stat-type-month { border-left-color: var(--color-blue); }
+.stat-badge.stat-type-quarter { border-left-color: var(--color-orange); }
+.stat-badge.stat-type-year { border-left-color: #ff4444; }
+
+/* Сравнение лет */
+.stat-year-compare {
+    margin: 10px 0;
+    padding: 10px;
+    background: var(--background-primary);
+    border-radius: 4px;
+    border: 1px solid var(--background-modifier-border);
+}
+.stat-compare-item {
+    display: inline-block;
+    margin-right: 15px;
+    font-size: 12px;
+    color: var(--text-normal);
+}
+
 /* Ретроспектива */
-.memory-box { border-left: 4px solid var(--color-purple); }
-.retro-header { display: flex; justify-content: space-between; margin-bottom: 10px; }
-.retro-controls { display: flex; gap: 5px; margin-bottom: 10px; }
+.memory-box {
+    border-left: 4px solid var(--color-purple);
+    display: flex;
+    flex-direction: column;
+    flex: 1;
+    height: 100%;
+    min-height: 0; /* Важно для flex nested scrolling */
+}
+.retro-header { display: flex; justify-content: space-between; margin-bottom: 10px; flex-shrink: 0; }
+.retro-controls { display: flex; gap: 5px; margin-bottom: 10px; flex-shrink: 0; }
 .retro-btn { flex: 1; cursor: pointer; }
 .memory-preview {
     background: var(--background-primary);
-    padding: 10px;
+    padding: 15px;
     border-radius: 5px;
-    font-size: 0.9em;
-    max-height: 200px;
+    font-size: 1.1em;
+    flex: 1;
     overflow-y: auto;
+    min-height: 0; /* Важно для flex nested scrolling */
 }
 
 /* Превью при наведении на ячейку календаря */
@@ -243,13 +454,12 @@
 }
 
 .preview-content {
-    max-height: 400px;
     overflow-y: auto;
     padding: 15px;
     background: var(--background-primary);
     border-radius: 6px;
-    font-size: 13px;
-    line-height: 1.6;
+    font-size: 15px;
+    line-height: 1.7;
     white-space: pre-wrap;
     color: var(--text-normal);
     margin-bottom: 15px;
@@ -496,70 +706,196 @@
 }
 
 /* === ОБЗОР МЕСЯЦЕВ === */
-.months-overview-container {
-    margin-bottom: 30px;
+/* === КОМПАКТНЫЙ ОБЗОР === */
+.overview-compact-container {
+    padding: 10px;
 }
 
-.months-grid {
-    display: grid;
-    grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
-    gap: 15px;
-}
-
-.month-card {
+.overview-table {
     background: var(--background-secondary);
-    padding: 15px;
     border-radius: 8px;
+    padding: 15px;
+    margin-bottom: 15px;
+}
+
+.overview-year-row {
+    display: flex;
+    align-items: center;
+    margin-bottom: 10px;
+}
+
+.overview-year {
+    flex: 0 0 auto;
+    padding: 8px 15px;
+    background: var(--background-primary);
+    border-radius: 4px;
+    font-size: 14px;
+    margin-right: 10px;
+    border: 2px solid var(--background-modifier-border);
+}
+
+.overview-year.has-note {
+    border-color: var(--color-red);
+    background: linear-gradient(135deg, var(--background-primary) 0%, rgba(244, 67, 54, 0.1) 100%);
+}
+
+.note-mark {
+    margin-left: 8px;
+}
+
+.note-mark-empty {
+    margin-left: 8px;
+    color: var(--text-muted);
+    font-size: 16px;
+}
+
+.overview-quarters-row {
+    display: flex;
+    gap: 8px;
+}
+
+.overview-quarter {
+    flex: 1;
+    padding: 6px 12px;
+    background: var(--background-primary);
+    border-radius: 4px;
+    text-align: center;
+    font-size: 12px;
+    font-weight: bold;
     border: 2px solid var(--background-modifier-border);
     cursor: pointer;
     transition: all 0.2s;
-    min-height: 100px;
-    display: flex;
-    flex-direction: column;
-    justify-content: space-between;
 }
 
-.month-card:hover {
-    transform: translateY(-3px);
-    box-shadow: 0 4px 12px rgba(0,0,0,0.2);
+.overview-quarter:hover {
+    border-color: var(--interactive-accent);
 }
 
-.month-card-with-note {
-    border-color: var(--color-green);
-    background: linear-gradient(135deg, var(--background-secondary) 0%, rgba(76, 175, 80, 0.1) 100%);
+.overview-quarter.has-note {
+    border-color: var(--color-orange);
+    background: linear-gradient(135deg, var(--background-primary) 0%, rgba(255, 152, 0, 0.1) 100%);
 }
 
-.month-card-title {
-    margin: 0 0 10px 0;
-    font-size: 16px;
-    color: var(--text-normal);
-    text-align: center;
+.overview-months-grid {
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    gap: 8px;
+    margin-top: 10px;
 }
 
-.month-card-stats {
-    display: flex;
-    justify-content: center;
-    align-items: center;
-}
-
-.month-stat-badge {
-    padding: 5px 10px;
+.overview-month {
+    padding: 10px;
+    background: var(--background-primary);
     border-radius: 4px;
+    border: 2px solid var(--background-modifier-border);
+    cursor: pointer;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    transition: all 0.2s;
+}
+
+.overview-month:hover {
+    border-color: var(--interactive-accent);
+}
+
+.overview-month.has-note {
+    border-color: var(--color-blue);
+}
+
+.overview-month.month-with-monthly-note {
+    background: linear-gradient(135deg, var(--background-primary) 0%, rgba(33, 150, 243, 0.1) 100%);
+}
+
+.month-name {
     font-size: 12px;
+    font-weight: bold;
+    color: var(--text-normal);
+}
+
+.day-count {
+    font-size: 10px;
+    padding: 2px 6px;
+    border-radius: 3px;
+    background: var(--color-green);
+    color: white;
+    font-weight: bold;
+}
+
+/* Статистика в обзоре */
+.overview-stats-section {
+    background: var(--background-secondary);
+    border-radius: 8px;
+    padding: 15px;
+}
+
+.overview-stats-title {
+    font-size: 14px;
+    font-weight: bold;
+    color: var(--text-normal);
+    margin: 0 0 10px 0;
+}
+
+/* Легенда цветов */
+.overview-legend {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 15px;
+    margin-bottom: 15px;
+    padding: 10px;
+    background: var(--background-primary);
+    border-radius: 4px;
+}
+
+.legend-item {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+}
+
+.legend-dot {
+    width: 12px;
+    height: 12px;
+    border-radius: 50%;
+    flex-shrink: 0;
+}
+
+.legend-dot.legend-day { background: var(--color-green); }
+.legend-dot.legend-week { background: var(--color-purple); }
+.legend-dot.legend-month { background: var(--color-blue); }
+.legend-dot.legend-quarter { background: var(--color-orange); }
+.legend-dot.legend-year { background: #ff4444; }
+
+.legend-label {
+    font-size: 11px;
+    color: var(--text-normal);
     font-weight: 500;
 }
 
-.month-has-note {
-    background: var(--color-green);
-    color: white;
+.legend-emoji {
+    font-size: 14px;
 }
 
-.month-no-note {
-    background: var(--background-modifier-border);
-    color: var(--text-muted);
+.overview-stats-badges {
+    display: flex;
+    justify-content: space-around;
+    flex-wrap: wrap;
+    gap: 10px;
 }
 
-/* Tooltip для месяцев */
+.overview-stat-badge {
+    font-size: 12px;
+    padding: 6px 12px;
+    border-radius: 4px;
+    font-weight: bold;
+}
+.overview-stat-badge.stat-day { background: var(--color-green); color: white; }
+.overview-stat-badge.stat-week { background: var(--color-purple); color: white; }
+.overview-stat-badge.stat-month { background: var(--color-blue); color: white; }
+.overview-stat-badge.stat-quarter { background: var(--color-orange); color: white; }
+.overview-stat-badge.stat-year { background: #ff4444; color: white; }
+
+/* Старый стиль (не используется) */
 .month-card[data-preview]:hover::after {
     content: attr(data-preview);
     position: fixed;

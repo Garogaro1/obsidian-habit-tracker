@@ -13,7 +13,7 @@ interface IHabitPlugin {
 
 export const VIEW_TYPE_HABIT_TRACKER = 'habit-tracker-view';
 
-type ViewMode = 'panorama' | 'year' | 'quarters' | 'months' | 'weeks' | 'years' | 'overview';
+type ViewMode = 'panorama' | 'year' | 'overview';
 
 export class HabitTrackerView extends ItemView {
 	plugin: IHabitPlugin;
@@ -81,28 +81,16 @@ export class HabitTrackerView extends ItemView {
 
 		const titles = {
 			'panorama': '🏛 Панорама (3 месяца)',
-			'year': '🗺 Карта Года (дни)',
-			'quarters': '📊 Кварталы',
-			'months': '🗓️ Месяцы',
-			'weeks': '📆 Недели',
-			'years': '🎯 Годы',
-			'overview': '📆 Обзор Месяцев'
+			'year': '🗺 Карта Года',
+			'overview': '📆 Обзор'
 		};
 		row.createEl('h2', { text: titles[this.viewMode] });
 
 		const switcher = row.createEl('div', { cls: 'mode-switcher' });
 		switcher.createEl('button', { text: '3 Мес', cls: `mode-btn ${this.viewMode === 'panorama' ? 'active' : ''}` })
 			.onclick = () => { this.viewMode = 'panorama'; this.render(); };
-		switcher.createEl('button', { text: 'Дни', cls: `mode-btn ${this.viewMode === 'year' ? 'active' : ''}` })
+		switcher.createEl('button', { text: 'Карта Года', cls: `mode-btn ${this.viewMode === 'year' ? 'active' : ''}` })
 			.onclick = () => { this.viewMode = 'year'; this.render(); };
-		switcher.createEl('button', { text: 'Кварталы', cls: `mode-btn ${this.viewMode === 'quarters' ? 'active' : ''}` })
-			.onclick = () => { this.viewMode = 'quarters'; this.render(); };
-		switcher.createEl('button', { text: 'Месяцы', cls: `mode-btn ${this.viewMode === 'months' ? 'active' : ''}` })
-			.onclick = () => { this.viewMode = 'months'; this.render(); };
-		switcher.createEl('button', { text: 'Недели', cls: `mode-btn ${this.viewMode === 'weeks' ? 'active' : ''}` })
-			.onclick = () => { this.viewMode = 'weeks'; this.render(); };
-		switcher.createEl('button', { text: 'Годы', cls: `mode-btn ${this.viewMode === 'years' ? 'active' : ''}` })
-			.onclick = () => { this.viewMode = 'years'; this.render(); };
 		switcher.createEl('button', { text: 'Обзор', cls: `mode-btn ${this.viewMode === 'overview' ? 'active' : ''}` })
 			.onclick = () => { this.viewMode = 'overview'; this.render(); };
 
@@ -110,15 +98,18 @@ export class HabitTrackerView extends ItemView {
 
 		if (this.viewMode === 'panorama') this.renderPanorama(mainContent);
 		else if (this.viewMode === 'year') this.renderYearHeatmap(mainContent);
-		else if (this.viewMode === 'quarters') this.renderQuarters(mainContent);
-		else if (this.viewMode === 'months') this.renderPeriodicMonths(mainContent);
-		else if (this.viewMode === 'weeks') this.renderPeriodicWeeks(mainContent);
-		else if (this.viewMode === 'years') this.renderPeriodicYears(mainContent);
 		else if (this.viewMode === 'overview') this.renderMonthsOverview(mainContent);
 
 		const sidebar = mainContent.createEl('div', { cls: 'tracker-sidebar' });
-		this.renderStatistics(sidebar);
-		this.renderRetroModule(sidebar);
+
+		// На Панораме только Ретро (занимает всё место)
+		if (this.viewMode === 'panorama') {
+			sidebar.addClass('sidebar-retro-only');
+			this.renderRetroModule(sidebar);
+		} else {
+			// На Обзоре и Карте Года - только Статистика
+			this.renderStatistics(sidebar);
+		}
 	}
 
 	renderPanorama(container: HTMLElement) {
@@ -126,6 +117,51 @@ export class HabitTrackerView extends ItemView {
 		nav.createEl('button', { text: '◀ Квартал', cls: 'mode-btn' }).onclick = () => { this.currentDate.subtract(3, 'months'); this.render(); };
 		nav.createEl('span', { text: 'Сегодня', cls: 'mode-btn' }).onclick = () => { this.currentDate = moment(); this.render(); };
 		nav.createEl('button', { text: 'Квартал ▶', cls: 'mode-btn' }).onclick = () => { this.currentDate.add(3, 'months'); this.render(); };
+
+		// === КВАРТАЛЬНАЯ ЗАМЕТКА ===
+		const currentYear = this.currentDate.year();
+		const currentQuarter = this.currentDate.quarter();
+
+		// Ищем квартальную заметку
+		const quarterFile = this.dailyNotes.find(file => {
+			const data = this.getFileData(file);
+			return data && data.type === 'quarter' &&
+				   data.date.year() === currentYear &&
+				   data.date.quarter() === currentQuarter;
+		});
+
+		// Показываем квартальную заметку над календарями
+		const quarterSection = container.createEl('div', { cls: 'panorama-quarter-note' });
+
+		if (quarterFile) {
+			const quarterCard = quarterSection.createEl('div', {
+				cls: 'quarter-card-pano quarter-with-note-pano'
+			});
+
+			quarterCard.createEl('div', { cls: 'quarter-title-pano', text: `📊 ${currentYear} Q${currentQuarter}` });
+			quarterCard.createEl('div', { cls: 'quarter-badge-pano', text: '✅ Есть заметка' });
+
+			quarterCard.onmouseenter = async () => {
+				const content = await this.plugin.app.vault.read(quarterFile);
+				const preview = content.slice(0, 150).replace(/[#*`]/g, '');
+				quarterCard.setAttribute('data-preview', preview + (content.length > 150 ? '...' : ''));
+			};
+
+			quarterCard.onclick = () => this.plugin.app.workspace.openLinkText(quarterFile.path, '', true);
+		} else {
+			const quarterCard = quarterSection.createEl('div', {
+				cls: 'quarter-card-pano quarter-empty-pano'
+			});
+
+			quarterCard.createEl('div', { cls: 'quarter-title-pano', text: `📊 ${currentYear} Q${currentQuarter}` });
+			quarterCard.createEl('div', { cls: 'quarter-badge-pano quarter-empty-badge-pano', text: '❌ Нет заметки' });
+
+			quarterCard.onclick = () => {
+				const folders = this.plugin.settings.watchedFolders.split('\n');
+				const path = `${folders[0].trim()}/${currentYear}-Q${currentQuarter}.md`;
+				this.createNoteIfNotExists(path);
+			};
+		}
 
 		// Показываем текущий квартал (3 месяца)
 		const quarterStart = this.currentDate.clone().startOf('quarter');
@@ -183,49 +219,142 @@ export class HabitTrackerView extends ItemView {
 
 	renderSingleMonth(parent: HTMLElement, date: moment.Moment) {
 		const box = parent.createEl('div', { cls: 'month-unit' });
-		box.createEl('h4', { cls: 'month-label', text: `${getMonthName(date)} ${date.year()}` });
-		const grid = box.createEl('div', { cls: 'calendar-grid mini' });
 
-		['Пн','Вт','Ср','Чт','Пт','Сб','Вс'].forEach(t => grid.createEl('div', { cls: 'calendar-day-header', text: t }));
+		// Заголовок месяца с месячной заметкой
+		const monthHeader = box.createEl('div', { cls: 'month-header-row' });
+		monthHeader.createEl('h4', { cls: 'month-label', text: `${getMonthName(date)} ${date.year()}` });
+
+		// Ищем месячную заметку
+		const monthFile = this.dailyNotes.find(file => {
+			const data = this.getFileData(file);
+			return data && data.type === 'month' &&
+				   data.date.year() === date.year() &&
+				   data.date.month() === date.month();
+		});
+
+		const monthIcon = monthHeader.createEl('div', { cls: 'month-note-icon' });
+
+		if (monthFile) {
+			monthIcon.addClass('month-note-exists');
+			monthIcon.textContent = '📋';
+
+			monthIcon.onmouseenter = async () => {
+				const content = await this.plugin.app.vault.read(monthFile);
+				const preview = content.slice(0, 100).replace(/[#*`]/g, '');
+				monthIcon.setAttribute('data-preview', preview + (content.length > 100 ? '...' : ''));
+			};
+
+			monthIcon.onclick = () => this.plugin.app.workspace.openLinkText(monthFile.path, '', true);
+		} else {
+			monthIcon.addClass('month-note-empty');
+			monthIcon.textContent = '+';
+
+			monthIcon.onclick = () => {
+				const folders = this.plugin.settings.watchedFolders.split('\n');
+				const path = `${folders[0].trim()}/${date.format('YYYY-MM')}.md`;
+				this.createNoteIfNotExists(path);
+			};
+		}
+
+		const grid = box.createEl('div', { cls: 'calendar-grid mini-with-weeks' });
+
+		// Заголовки: 7 дней + пустая колонка для недель
+		['Пн','Вт','Ср','Чт','Пт','Сб','Вс',''].forEach(t => grid.createEl('div', { cls: 'calendar-day-header', text: t }));
 
 		const days = generateCalendar(date);
 		const notesMap = new Map<string, {file: TFile, type: string}>();
 		this.dailyNotes.forEach(f => {
 			const data = this.getFileData(f);
-			if(data) notesMap.set(data.date.format('YYYY-MM-DD'), { file: f, type: data.type });
+			// В календаре только дневные заметки
+			if(data && data.type === 'day') {
+				notesMap.set(data.date.format('YYYY-MM-DD'), { file: f, type: data.type });
+			}
+		});
+
+		// Карта недельных заметок
+		const weekNotesMap = new Map<string, TFile>();
+		this.dailyNotes.forEach(f => {
+			const data = this.getFileData(f);
+			if(data && data.type === 'week') {
+				const weekYear = data.date.year();
+				const weekNum = data.date.isoWeek();
+				const weekKey = `${weekYear}-W${weekNum.toString().padStart(2, '0')}`;
+				weekNotesMap.set(weekKey, f);
+			}
 		});
 
 		const today = moment().format('YYYY-MM-DD');
 
-		days.forEach(d => {
-			const cell = grid.createEl('div', { cls: 'calendar-day' });
-			if (d) {
-				const dStr = d.format('YYYY-MM-DD');
-				const note = notesMap.get(dStr);
+		// Группируем дни по неделям и добавляем недельные badges справа
+		for (let i = 0; i < days.length; i += 7) {
+			const weekDays = days.slice(i, i + 7);
 
-				cell.createEl('div', { text: d.date().toString() });
+			// Рисуем 7 дней недели
+			weekDays.forEach(d => {
+				const cell = grid.createEl('div', { cls: 'calendar-day' });
+				if (d) {
+					const dStr = d.format('YYYY-MM-DD');
+					const note = notesMap.get(dStr);
 
-				if (note) {
-					cell.addClass('calendar-day-with-note');
-					cell.addClass(`type-${note.type}`); // Добавляем класс типа!
+					cell.createEl('div', { text: d.date().toString() });
 
-					// Preview при наведении
-					cell.onmouseenter = async () => {
-						const content = await this.plugin.app.vault.read(note.file);
-						const preview = content.slice(0, 150).replace(/[#*`]/g, '');
-						cell.setAttribute('data-preview', preview + (content.length > 150 ? '...' : ''));
+					if (note) {
+						cell.addClass('calendar-day-with-note');
+						cell.addClass(`type-${note.type}`);
+
+						cell.onmouseenter = async () => {
+							const content = await this.plugin.app.vault.read(note.file);
+							const preview = content.slice(0, 150).replace(/[#*`]/g, '');
+							cell.setAttribute('data-preview', preview + (content.length > 150 ? '...' : ''));
+						};
+
+						cell.onclick = () => this.plugin.app.workspace.openLinkText(note.file.path, '', true);
+					} else {
+						cell.onclick = () => this.createNote(dStr);
+					}
+
+					if (dStr === today) cell.addClass('calendar-day-today');
+					cell.ariaLabel = dStr;
+				}
+			});
+
+			// Находим первый не-null день недели
+			const firstDayOfWeek = weekDays.find(d => d !== null);
+			if (firstDayOfWeek) {
+				const weekDate = firstDayOfWeek.clone().startOf('isoWeek');
+				const weekKey = `${weekDate.year()}-W${weekDate.isoWeek().toString().padStart(2, '0')}`;
+				const weekFile = weekNotesMap.get(weekKey);
+				const weekNum = weekDate.isoWeek();
+
+				// Рисуем ячейку с недельным badge справа от недели
+				const weekCell = grid.createEl('div', { cls: 'calendar-week-cell' });
+
+				if (weekFile) {
+					weekCell.addClass('week-cell-with-note');
+					weekCell.createEl('div', { cls: 'week-number', text: `W${weekNum.toString().padStart(2, '0')}` });
+
+					weekCell.onmouseenter = async () => {
+						const content = await this.plugin.app.vault.read(weekFile);
+						const preview = content.slice(0, 80).replace(/[#*`]/g, '');
+						weekCell.setAttribute('data-preview', preview + (content.length > 80 ? '...' : ''));
 					};
 
-					cell.onclick = () => this.plugin.app.workspace.openLinkText(note.file.path, '', true);
+					weekCell.onclick = () => this.plugin.app.workspace.openLinkText(weekFile.path, '', true);
 				} else {
-					// Создание новой заметки
-					cell.onclick = () => this.createNote(dStr);
-				}
+					weekCell.addClass('week-cell-empty');
+					weekCell.createEl('div', { cls: 'week-number', text: `W${weekNum.toString().padStart(2, '0')}` });
 
-				if (dStr === today) cell.addClass('calendar-day-today');
-				cell.ariaLabel = dStr;
+					weekCell.onclick = () => {
+						const folders = this.plugin.settings.watchedFolders.split('\n');
+						const path = `${folders[0].trim()}/${weekDate.format('gggg-[W]ww')}.md`;
+						this.createNoteIfNotExists(path);
+					};
+				}
+			} else {
+				// Пустая ячейка если вся неделя null
+				grid.createEl('div', { cls: 'calendar-week-cell empty' });
 			}
-		});
+		}
 	}
 
 	// === КВАРТАЛЫ (отдельный вид) ===
@@ -474,7 +603,7 @@ export class HabitTrackerView extends ItemView {
 
 	// === ОБЗОР ВСЕХ ТИПОВ ЗАМЕТОК ===
 	renderMonthsOverview(container: HTMLElement) {
-		const wrapper = container.createEl('div', { cls: 'months-overview-container' });
+		const wrapper = container.createEl('div', { cls: 'overview-compact-container' });
 
 		// Навигация по годам
 		const nav = wrapper.createEl('div', { cls: 'panorama-nav' });
@@ -489,46 +618,34 @@ export class HabitTrackerView extends ItemView {
 			this.render();
 		};
 
-		// === 1. ГОДОВАЯ ЗАМЕТКА ===
-		const yearSection = wrapper.createEl('div', { cls: 'periodic-section' });
-		yearSection.createEl('h4', { cls: 'periodic-section-title', text: '🎯 Годовая заметка' });
-
 		const currentYear = this.currentDate.year();
+
+		// === КОМПАКТНАЯ ТАБЛИЦА: ГОД → КВАРТАЛЫ → МЕСЯЦЫ ===
+		const table = wrapper.createEl('div', { cls: 'overview-table' });
+
+		// Годовая заметка
 		const yearFile = this.dailyNotes.find(file => {
 			const data = this.getFileData(file);
 			return data && data.type === 'year' && data.date.year() === currentYear;
 		});
 
+		const yearRow = table.createEl('div', { cls: 'overview-year-row' });
+		const yearCell = yearRow.createEl('div', { cls: `overview-cell overview-year ${yearFile ? 'has-note' : ''}` });
+		yearCell.innerHTML = `<strong>${currentYear}</strong>`;
 		if (yearFile) {
-			const yearCard = yearSection.createEl('div', { cls: 'year-card year-with-note current-year' });
-			yearCard.createEl('div', { cls: 'year-title', text: currentYear.toString() });
-			yearCard.createEl('div', { cls: 'year-badge', text: '✅ Есть годовая заметка' });
-
-			yearCard.onmouseenter = async () => {
-				const content = await this.plugin.app.vault.read(yearFile);
-				const preview = content.slice(0, 150).replace(/[#*`]/g, '');
-				yearCard.setAttribute('data-preview', preview + (content.length > 150 ? '...' : ''));
-			};
-			yearCard.onclick = () => this.plugin.app.workspace.openLinkText(yearFile.path, '', true);
+			yearCell.innerHTML += ' <span class="note-mark">📋</span>';
+			yearCell.onclick = () => this.plugin.app.workspace.openLinkText(yearFile.path, '', true);
 		} else {
-			const yearCard = yearSection.createEl('div', { cls: 'year-card' });
-			yearCard.createEl('div', { cls: 'year-title', text: currentYear.toString() });
-			yearCard.createEl('div', { cls: 'year-badge year-empty', text: '❌ Нет годовой заметки' });
-			yearCard.onclick = () => {
+			yearCell.innerHTML += ' <span class="note-mark-empty">+</span>';
+			yearCell.onclick = () => {
 				const folders = this.plugin.settings.watchedFolders.split('\n');
-				const path = `${folders[0].trim()}/${currentYear}.md`;
-				this.createNoteIfNotExists(path);
+				this.createNoteIfNotExists(`${folders[0].trim()}/${currentYear}.md`);
 			};
 		}
 
-		// === 2. КВАРТАЛЬНЫЕ ЗАМЕТКИ ===
-		const quartersSection = wrapper.createEl('div', { cls: 'periodic-section' });
-		quartersSection.createEl('h4', { cls: 'periodic-section-title', text: '📊 Квартальные заметки' });
-
-		const quartersGrid = quartersSection.createEl('div', { cls: 'quarters-grid' });
+		// Квартальные заметки (в одной строке)
+		const quartersRow = yearRow.createEl('div', { cls: 'overview-quarters-row' });
 		for (let q = 1; q <= 4; q++) {
-			const quarterStart = moment().year(currentYear).quarter(q).startOf('quarter');
-
 			const quarterFile = this.dailyNotes.find(file => {
 				const data = this.getFileData(file);
 				return data && data.type === 'quarter' &&
@@ -536,47 +653,23 @@ export class HabitTrackerView extends ItemView {
 					   data.date.quarter() === q;
 			});
 
-			const quarterCard = quartersGrid.createEl('div', {
-				cls: `quarter-card ${quarterFile ? 'quarter-with-note' : ''}`
-			});
-
-			const monthsInQuarter = [];
-			for (let m = 0; m < 3; m++) {
-				const mDate = quarterStart.clone().add(m, 'months');
-				monthsInQuarter.push(getMonthName(mDate).slice(0, 3));
-			}
-
-			quarterCard.createEl('div', { cls: 'quarter-title', text: `Q${q}` });
-			quarterCard.createEl('div', { cls: 'quarter-months', text: monthsInQuarter.join(' • ') });
+			const qCell = quartersRow.createEl('div', { cls: `overview-quarter ${quarterFile ? 'has-note' : ''}` });
+			qCell.textContent = `Q${q}`;
 
 			if (quarterFile) {
-				quarterCard.createEl('div', { cls: 'quarter-badge', text: '✅ Есть заметка' });
-
-				quarterCard.onmouseenter = async () => {
-					const content = await this.plugin.app.vault.read(quarterFile);
-					const preview = content.slice(0, 150).replace(/[#*`]/g, '');
-					quarterCard.setAttribute('data-preview', preview + (content.length > 150 ? '...' : ''));
-				};
-
-				quarterCard.onclick = () => this.plugin.app.workspace.openLinkText(quarterFile.path, '', true);
+				qCell.onclick = () => this.plugin.app.workspace.openLinkText(quarterFile.path, '', true);
 			} else {
-				quarterCard.createEl('div', { cls: 'quarter-badge quarter-empty', text: '❌ Нет заметки' });
-				quarterCard.onclick = () => {
+				qCell.onclick = () => {
 					const folders = this.plugin.settings.watchedFolders.split('\n');
-					const path = `${folders[0].trim()}/${currentYear}-Q${q}.md`;
-					this.createNoteIfNotExists(path);
+					this.createNoteIfNotExists(`${folders[0].trim()}/${currentYear}-Q${q}.md`);
 				};
 			}
 		}
 
-		// === 3. МЕСЯЧНЫЕ ЗАМЕТКИ ===
-		const monthsSection = wrapper.createEl('div', { cls: 'periodic-section' });
-		monthsSection.createEl('h4', { cls: 'periodic-section-title', text: '🗓️ Месячные заметки' });
-
-		const monthsGrid = monthsSection.createEl('div', { cls: 'periodic-months-grid' });
+		// Месячные заметки (4 строки по 3 месяца)
+		const monthsGrid = table.createEl('div', { cls: 'overview-months-grid' });
 
 		for (let m = 0; m < 12; m++) {
-			const monthDate = moment().year(currentYear).month(m);
 			const monthFile = this.dailyNotes.find(file => {
 				const data = this.getFileData(file);
 				return data && data.type === 'month' &&
@@ -584,141 +677,59 @@ export class HabitTrackerView extends ItemView {
 					   data.date.month() === m;
 			});
 
-			const monthCard = monthsGrid.createEl('div', {
-				cls: `periodic-month-card ${monthFile ? 'periodic-month-with-note' : ''}`
-			});
-
-			monthCard.createEl('div', { cls: 'periodic-month-name', text: getMonthName(monthDate).slice(0, 3) });
-
-			if (monthFile) {
-				monthCard.addClass('periodic-month-has-note');
-
-				monthCard.onmouseenter = async () => {
-					const content = await this.plugin.app.vault.read(monthFile);
-					const preview = content.slice(0, 150).replace(/[#*`]/g, '');
-					monthCard.setAttribute('data-preview', preview + (content.length > 150 ? '...' : ''));
-				};
-
-				monthCard.onclick = () => this.plugin.app.workspace.openLinkText(monthFile.path, '', true);
-			} else {
-				monthCard.onclick = () => {
-					const folders = this.plugin.settings.watchedFolders.split('\n');
-					const path = `${folders[0].trim()}/${monthDate.format('YYYY-MM')}.md`;
-					this.createNoteIfNotExists(path);
-				};
-			}
-		}
-
-		// === 4. НЕДЕЛЬНЫЕ ЗАМЕТКИ ===
-		const weeksSection = wrapper.createEl('div', { cls: 'periodic-section' });
-		weeksSection.createEl('h4', { cls: 'periodic-section-title', text: '📆 Недельные заметки' });
-
-		const weeksByMonth = weeksSection.createEl('div', { cls: 'weeks-by-month' });
-
-		for (let m = 0; m < 12; m++) {
-			const monthDate = moment().year(currentYear).month(m);
-			const monthStart = monthDate.clone().startOf('month');
-			const monthEnd = monthDate.clone().endOf('month');
-
-			// Ищем все недельные заметки в этом месяце
-			const weeksInMonth = [];
-			let currentWeek = monthStart.clone().startOf('isoWeek');
-
-			while (currentWeek.isBefore(monthEnd) || currentWeek.isSame(monthEnd, 'day')) {
-				const weekFile = this.dailyNotes.find(file => {
-					const data = this.getFileData(file);
-					return data && data.type === 'week' &&
-						   data.date.year() === currentYear &&
-						   data.date.isoWeek() === currentWeek.isoWeek();
-				});
-
-				weeksInMonth.push({
-					weekNum: currentWeek.isoWeek(),
-					hasNote: !!weekFile,
-					file: weekFile
-				});
-
-				currentWeek.add(1, 'week');
-			}
-
-			const monthBlock = weeksByMonth.createEl('div', { cls: 'month-weeks-block' });
-			monthBlock.createEl('div', { cls: 'month-weeks-title', text: getMonthName(monthDate).slice(0, 3) });
-
-			const weeksContainer = monthBlock.createEl('div', { cls: 'weeks-container' });
-
-			weeksInMonth.forEach(({weekNum, hasNote, file}) => {
-				const weekBadge = weeksContainer.createEl('div', {
-					cls: `week-badge ${hasNote ? 'week-with-note' : 'week-empty'}`
-				});
-
-				weekBadge.textContent = `W${weekNum.toString().padStart(2, '0')}`;
-
-				if (hasNote && file) {
-					weekBadge.onmouseenter = async () => {
-						const content = await this.plugin.app.vault.read(file);
-						const preview = content.slice(0, 100).replace(/[#*`]/g, '');
-						weekBadge.setAttribute('data-preview', preview + (content.length > 100 ? '...' : ''));
-					};
-
-					weekBadge.onclick = () => this.plugin.app.workspace.openLinkText(file.path, '', true);
-				}
-			});
-		}
-
-		// === 5. ДНЕВНЫЕ ЗАМЕТКИ (статистика по месяцам) ===
-		const daysSection = wrapper.createEl('div', { cls: 'periodic-section' });
-		daysSection.createEl('h4', { cls: 'periodic-section-title', text: '📅 Дневные заметки (статистика)' });
-
-		const dayStatsGrid = daysSection.createEl('div', { cls: 'months-grid' });
-
-		for (let month = 0; month < 12; month++) {
-			const monthDate = this.currentDate.clone().month(month);
-			const monthStart = monthDate.clone().startOf('month');
-			const monthEnd = monthDate.clone().endOf('month');
-
-			// Подсчитываем дневные заметки за месяц
+			// Подсчет дневных заметок за месяц
 			let dayCount = 0;
-			const dayFiles: TFile[] = [];
-
 			this.dailyNotes.forEach(file => {
 				const data = this.getFileData(file);
-				if (data && data.type === 'day') {
-					const fileDate = data.date;
-					if (fileDate.year() === currentYear && fileDate.month() === month) {
-						dayCount++;
-						dayFiles.push(file);
-					}
+				if (data && data.type === 'day' &&
+					data.date.year() === currentYear &&
+					data.date.month() === m) {
+					dayCount++;
 				}
 			});
 
-			const monthCard = dayStatsGrid.createEl('div', { cls: 'month-card' });
-			monthCard.createEl('h4', { cls: 'month-card-title', text: getMonthName(monthDate) });
+			const monthCell = monthsGrid.createEl('div', { cls: `overview-month ${monthFile ? 'has-note' : ''}` });
 
-			const statsDiv = monthCard.createEl('div', { cls: 'month-card-stats' });
-
+			const monthName = getMonthName(moment().year(currentYear).month(m)).slice(0, 3);
+			monthCell.innerHTML = `<span class="month-name">${monthName}</span>`;
 			if (dayCount > 0) {
-				monthCard.addClass('month-card-with-note');
-				statsDiv.createEl('span', { cls: 'month-stat-badge month-has-note', text: `✅ ${dayCount} заметок` });
-
-				// Показать последнюю заметку месяца
-				const lastDayFile = dayFiles.sort((a, b) => {
-					const dataA = this.getFileData(a);
-					const dataB = this.getFileData(b);
-					if (!dataA || !dataB) return 0;
-					return dataB.date.valueOf() - dataA.date.valueOf();
-				})[0];
-
-				monthCard.onclick = () => this.plugin.app.workspace.openLinkText(lastDayFile.path, '', true);
-
-				monthCard.onmouseenter = async () => {
-					const content = await this.plugin.app.vault.read(lastDayFile);
-					const preview = content.slice(0, 150).replace(/[#*`]/g, '');
-					monthCard.setAttribute('data-preview', preview + (content.length > 150 ? '...' : ''));
-				};
+				monthCell.innerHTML += `<span class="day-count">${dayCount}д</span>`;
+			}
+			if (monthFile) {
+				monthCell.classList.add('month-with-monthly-note');
+				monthCell.onclick = () => this.plugin.app.workspace.openLinkText(monthFile.path, '', true);
 			} else {
-				statsDiv.createEl('span', { cls: 'month-stat-badge month-no-note', text: '❌ Нет заметок' });
+				monthCell.onclick = () => {
+					const folders = this.plugin.settings.watchedFolders.split('\n');
+					this.createNoteIfNotExists(`${folders[0].trim()}/${moment().year(currentYear).month(m).format('YYYY-MM')}.md`);
+				};
 			}
 		}
+
+		// === СТАТИСТИКА ЗАПИСЕЙ ПО ТИПАМ ===
+		const statsSection = wrapper.createEl('div', { cls: 'overview-stats-section' });
+
+		// Подсчет по типам за текущий год
+		const typeCounts = { day: 0, week: 0, month: 0, quarter: 0, year: 0 };
+		this.dailyNotes.forEach(file => {
+			const result = this.getFileData(file);
+			if (result && result.date.year() === currentYear) {
+				if (typeCounts[result.type as keyof typeof typeCounts] !== undefined) {
+					typeCounts[result.type as keyof typeof typeCounts]++;
+				}
+			}
+		});
+
+		statsSection.createEl('h4', { cls: 'overview-stats-title', text: `📊 Заметки за ${currentYear} год` });
+
+		const statsBadges = statsSection.createEl('div', { cls: 'overview-stats-badges' });
+		statsBadges.innerHTML = `
+			<span class="overview-stat-badge stat-day">📅 Дни: ${typeCounts.day}</span>
+			<span class="overview-stat-badge stat-week">📆 Недели: ${typeCounts.week}</span>
+			<span class="overview-stat-badge stat-month">🗓️ Месяцы: ${typeCounts.month}</span>
+			<span class="overview-stat-badge stat-quarter">📊 Кварталы: ${typeCounts.quarter}</span>
+			<span class="overview-stat-badge stat-year">🎯 Годы: ${typeCounts.year}</span>
+		`;
 	}
 
 	async createNoteIfNotExists(path: string) {
@@ -736,15 +747,6 @@ export class HabitTrackerView extends ItemView {
 		const box = container.createEl('div', { cls: 'stats-container' });
 		box.createEl('h3', { text: '📈 Прогресс' });
 
-		// Подсчет заметок по типам
-		const typeCounts = { day: 0, week: 0, month: 0, quarter: 0, year: 0 };
-		this.dailyNotes.forEach(file => {
-			const result = this.getFileData(file);
-			if (result && typeCounts[result.type as keyof typeof typeCounts] !== undefined) {
-				typeCounts[result.type as keyof typeof typeCounts]++;
-			}
-		});
-
 		// Базовые метрики
 		box.createEl('p', { cls: 'stat-item' }).innerHTML = `<strong>🔥 Текущая серия:</strong> ${this.stats.currentStreak} дн.`;
 		box.createEl('p', { cls: 'stat-item' }).innerHTML = `<strong>📅 Последняя запись:</strong> ${this.stats.lastNoteDate}`;
@@ -753,27 +755,89 @@ export class HabitTrackerView extends ItemView {
 		// Разделитель
 		box.createEl('hr', { cls: 'stat-divider' });
 
-		// Детализация по типам
-		box.createEl('p', { cls: 'stat-item stat-header' }).innerHTML = '<strong>📊 Заметки по типам:</strong>';
-		box.createEl('p', { cls: 'stat-item stat-type-day' }).innerHTML = `📅 Дневные: <strong>${typeCounts.day}</strong>`;
-		box.createEl('p', { cls: 'stat-item stat-type-week' }).innerHTML = `📆 Недельные: <strong>${typeCounts.week}</strong>`;
-		box.createEl('p', { cls: 'stat-item stat-type-month' }).innerHTML = `🗓️ Месячные: <strong>${typeCounts.month}</strong>`;
-		box.createEl('p', { cls: 'stat-item stat-type-quarter' }).innerHTML = `📊 Квартальные: <strong>${typeCounts.quarter}</strong>`;
-		box.createEl('p', { cls: 'stat-item stat-type-year' }).innerHTML = `🎯 Годовые: <strong>${typeCounts.year}</strong>`;
+		// Группировка заметок по годам и типам
+		const yearTypeCounts = new Map<number, { day: number; week: number; month: number; quarter: number; year: number }>();
+
+		this.dailyNotes.forEach(file => {
+			const result = this.getFileData(file);
+			if (result) {
+				const noteYear = result.date.year();
+				if (!yearTypeCounts.has(noteYear)) {
+					yearTypeCounts.set(noteYear, { day: 0, week: 0, month: 0, quarter: 0, year: 0 });
+				}
+				const counts = yearTypeCounts.get(noteYear)!;
+				if (counts[result.type as keyof typeof counts] !== undefined) {
+					counts[result.type as keyof typeof counts]++;
+				}
+			}
+		});
+
+		// Показываем только последний год с заметками
+		const sortedYears = Array.from(yearTypeCounts.keys()).sort((a, b) => b - a);
+		const latestYear = sortedYears.length > 0 ? sortedYears[0] : moment().year();
+
+		if (yearTypeCounts.has(latestYear)) {
+			const counts = yearTypeCounts.get(latestYear)!;
+
+			// Компактный горизонтальный блок для последнего года
+			const yearRow = box.createEl('div', { cls: 'stat-year-compact' });
+			yearRow.createEl('span', { cls: 'stat-year-label', text: `${latestYear}:` });
+
+			if (counts.day > 0) yearRow.createEl('span', { cls: 'stat-badge stat-type-day', text: `📅 ${counts.day}` });
+			if (counts.week > 0) yearRow.createEl('span', { cls: 'stat-badge stat-type-week', text: `📆 ${counts.week}` });
+			if (counts.month > 0) yearRow.createEl('span', { cls: 'stat-badge stat-type-month', text: `🗓️ ${counts.month}` });
+			if (counts.quarter > 0) yearRow.createEl('span', { cls: 'stat-badge stat-type-quarter', text: `📊 ${counts.quarter}` });
+			if (counts.year > 0) yearRow.createEl('span', { cls: 'stat-badge stat-type-year', text: `🎯 ${counts.year}` });
+		}
 
 		// Всего заметок
 		box.createEl('hr', { cls: 'stat-divider' });
 		box.createEl('p', { cls: 'stat-item' }).innerHTML = `<strong>📝 Всего заметок:</strong> ${this.dailyNotes.length}`;
 
-		// Процент заполнения за год
-		const yearStart = moment().startOf('year');
-		const yearEnd = moment().endOf('year');
-		const daysInYear = yearEnd.diff(yearStart, 'days') + 1;
-		const daysPassed = moment().diff(yearStart, 'days') + 1;
-		const dayNotes = typeCounts.day;
-		const fillPercentage = daysPassed > 0 ? Math.round((dayNotes / daysPassed) * 100) : 0;
+		// Сравнение заполнения предыдущего и текущего года
+		const currentYear = moment().year();
+		const lastYear = currentYear - 1;
 
-		box.createEl('p', { cls: 'stat-item' }).innerHTML = `<strong>📈 Заполнение года:</strong> ${fillPercentage}%`;
+		// Заполнение предыдущего года
+		const lastYearStart = moment().year(lastYear).startOf('year');
+		const lastYearEnd = moment().year(lastYear).endOf('year');
+		const daysInLastYear = lastYearEnd.diff(lastYearStart, 'days') + 1;
+
+		let lastYearDayNotes = 0;
+		this.dailyNotes.forEach(file => {
+			const result = this.getFileData(file);
+			if (result && result.type === 'day' && result.date.year() === lastYear) {
+				lastYearDayNotes++;
+			}
+		});
+
+		const lastYearFillPercentage = daysInLastYear > 0 ? Math.round((lastYearDayNotes / daysInLastYear) * 100) : 0;
+
+		// Заполнение текущего года
+		const currentYearStart = moment().year(currentYear).startOf('year');
+		const daysPassed = moment().diff(currentYearStart, 'days') + 1;
+
+		let currentYearDayNotes = 0;
+		this.dailyNotes.forEach(file => {
+			const result = this.getFileData(file);
+			if (result && result.type === 'day' && result.date.year() === currentYear) {
+				currentYearDayNotes++;
+			}
+		});
+
+		const currentYearFillPercentage = daysPassed > 0 ? Math.round((currentYearDayNotes / daysPassed) * 100) : 0;
+
+		// Компактное сравнение
+		const compareRow = box.createEl('div', { cls: 'stat-year-compare' });
+		compareRow.innerHTML = `
+			<strong>📈 Заполнение:</strong><br>
+			<span class="stat-compare-item">
+				<strong>${lastYear}:</strong> ${lastYearFillPercentage}% (${lastYearDayNotes}/${daysInLastYear})
+			</span>
+			<span class="stat-compare-item">
+				<strong>${currentYear}:</strong> ${currentYearFillPercentage}% (${currentYearDayNotes}/${daysPassed})
+			</span>
+		`;
 	}
 
 	renderRetroModule(container: HTMLElement) {
