@@ -7,8 +7,14 @@ interface IHabitPlugin {
 	settings: {
 		watchedFolders: string;
 		dateFormats: string;
+		useTemplater: boolean;
+		templatesFolder: string;
+		dailyTemplate: string;
+		weeklyTemplate: string;
+		monthlyTemplate: string;
 	};
 	app: any;
+	templater: any;
 }
 
 export const VIEW_TYPE_HABIT_TRACKER = 'habit-tracker-view';
@@ -21,6 +27,7 @@ export class HabitTrackerView extends ItemView {
 	dailyNotes: TFile[] = [];
 	stats: HabitStats;
 	viewMode: ViewMode = 'panorama';
+	private eventRef: any;
 
 	constructor(leaf: WorkspaceLeaf, plugin: IHabitPlugin) {
 		super(leaf);
@@ -33,6 +40,42 @@ export class HabitTrackerView extends ItemView {
 
 	async onOpen() {
 		this.updateData();
+
+		// Регистрируем обработчик событий vault для автообновления
+		this.registerVaultEvent();
+	}
+
+	registerVaultEvent() {
+		// Отслеживаем создание и изменение файлов
+		this.eventRef = this.plugin.app.vault.on('create', (file: TFile) => {
+			if (file.extension === 'md') {
+				// Проверяем, что файл в отслеживаемой папке
+				const watchedFolders = this.plugin.settings.watchedFolders.split('\n').map(f => f.trim());
+				const isInWatchedFolder = watchedFolders.some(folder => file.path.startsWith(folder));
+
+				if (isInWatchedFolder) {
+					this.updateData();
+				}
+			}
+		});
+
+		this.plugin.app.vault.on('modify', (file: TFile) => {
+			if (file.extension === 'md') {
+				const watchedFolders = this.plugin.settings.watchedFolders.split('\n').map(f => f.trim());
+				const isInWatchedFolder = watchedFolders.some(folder => file.path.startsWith(folder));
+
+				if (isInWatchedFolder) {
+					this.updateData();
+				}
+			}
+		});
+	}
+
+	async onClose() {
+		// Удаляем обработчик событий при закрытии
+		if (this.eventRef) {
+			this.plugin.app.vault.offref(this.eventRef);
+		}
 	}
 
 	updateData() {
@@ -739,8 +782,58 @@ export class HabitTrackerView extends ItemView {
 				await this.plugin.app.vault.createFolder(folder);
 			}
 			await this.plugin.app.vault.create(path, '');
+
+			// Применяем Templater если включен
+			if (this.plugin.settings.useTemplater && this.plugin.templater) {
+				await this.applyTemplaterTemplate(path);
+			}
+
+			// Обновляем данные сразу после создания
+			this.updateData();
 		}
 		await this.plugin.app.workspace.openLinkText(path, '', true);
+	}
+
+	async applyTemplaterTemplate(path: string) {
+		// Определяем тип заметки по названию файла
+		const fileName = path.split('/').pop()?.replace('.md', '') || '';
+
+		let templateName = '';
+
+		// Проверяем формат и выбираем шаблон
+		if (fileName.match(/^\d{2}\.\d{2}\.\d{2}$/) || fileName.match(/^\d{4}-\d{2}-\d{2}$/)) {
+			templateName = this.plugin.settings.dailyTemplate;
+		} else if (fileName.match(/\d{4}-W\d{2}/)) {
+			templateName = this.plugin.settings.weeklyTemplate;
+		} else if (fileName.match(/^\d{4}-\d{2}$/)) {
+			templateName = this.plugin.settings.monthlyTemplate;
+		}
+
+		if (!templateName) return;
+
+		// Проверяем, что папка шаблонов указана
+		if (!this.plugin.settings.templatesFolder) return;
+
+		try {
+			// Используем папку из настроек
+			const templatePath = `${this.plugin.settings.templatesFolder}/${templateName}.md`;
+			// @ts-ignore
+			const templateFile = this.plugin.app.vault.getAbstractFileByPath(templatePath);
+
+			if (!templateFile) return;
+
+			// Получаем TFile для целевого файла
+			// @ts-ignore
+			const targetFile = this.plugin.app.vault.getAbstractFileByPath(path);
+
+			if (!targetFile) return;
+
+			// Применяем шаблон через API Templater (без задержки!)
+			// @ts-ignore
+			await this.plugin.templater.templater.write_template_to_file(templateFile, targetFile);
+		} catch (error) {
+			console.error('Templater error:', error);
+		}
 	}
 
 	renderStatistics(container: HTMLElement) {
@@ -891,6 +984,14 @@ export class HabitTrackerView extends ItemView {
 			const folder = folders[0].trim();
 			if(!this.plugin.app.vault.getAbstractFileByPath(folder)) await this.plugin.app.vault.createFolder(folder);
 			await this.plugin.app.vault.create(path, '');
+
+			// Применяем Templater если включен
+			if (this.plugin.settings.useTemplater && this.plugin.templater) {
+				await this.applyTemplaterTemplate(path);
+			}
+
+			// Обновляем данные сразу после создания
+			this.updateData();
 		}
 		await this.plugin.app.workspace.openLinkText(path, '', true);
 	}

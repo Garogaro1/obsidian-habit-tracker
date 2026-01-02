@@ -1,4 +1,4 @@
-import { App, Plugin, PluginSettingTab, Setting, TFile, moment } from 'obsidian';
+import { App, Plugin, PluginSettingTab, Setting, TFile, TFolder, moment } from 'obsidian';
 import { HabitTrackerView, VIEW_TYPE_HABIT_TRACKER } from './src/view';
 import './styles.css';
 
@@ -7,6 +7,16 @@ interface HabitTrackerSettings {
 	watchedFolders: string;
 	// Список форматов дат (каждый с новой строки)
 	dateFormats: string;
+	// Использовать Templater для новых заметок
+	useTemplater: boolean;
+	// Путь к папке с шаблонами Templater
+	templatesFolder: string;
+	// Шаблон Templater для дневных заметок
+	dailyTemplate: string;
+	// Шаблон Templater для недельных заметок
+	weeklyTemplate: string;
+	// Шаблон Templater для месячных заметок
+	monthlyTemplate: string;
 }
 
 const DEFAULT_SETTINGS: HabitTrackerSettings = {
@@ -18,16 +28,28 @@ const DEFAULT_SETTINGS: HabitTrackerSettings = {
 	// 2. Стандартные (YYYY-MM-DD, DD.MM.YYYY)
 	// 3. Периодические заметки (Недели, Месяцы, Кварталы, Годы)
 	dateFormats: 'DD.MM.YY\nDD.MM.YYYY\nYYYY-MM-DD\ngggg-[W]ww\nYYYY-MM\nYYYY-[Q]Q\nYYYY',
+
+	// Templater
+	useTemplater: false,
+	templatesFolder: '5. Utils/Templates',
+	dailyTemplate: '',
+	weeklyTemplate: '',
+	monthlyTemplate: '',
 }
 
 export default class HabitTrackerPlugin extends Plugin {
 	settings: HabitTrackerSettings;
+	templater: any; // Templater API
 
 	async onload() {
 		console.log('Загрузка плагина Трекер Привычек');
 
 		// Загрузка настроек
 		await this.loadSettings();
+
+		// Проверка Templater
+		// @ts-ignore
+		this.templater = this.app.plugins.plugins['templater-obsidian'];
 
 		// Регистрация View
 		this.registerView(
@@ -129,6 +151,112 @@ class HabitTrackerSettingTab extends PluginSettingTab {
 		containerEl.empty();
 
 		containerEl.createEl('h3', { text: 'Источники данных' });
+
+		// ===== TEMPLATER INTEGRATION =====
+		const hasTemplater = this.plugin.templater !== undefined;
+
+		containerEl.createEl('h3', { text: '🎨 Templater Интеграция' });
+
+		new Setting(containerEl)
+			.setName('Использовать Templater')
+			.setDesc(hasTemplater
+				? 'Применять шаблоны Templater при создании новых заметок'
+				: '⚠️ Templater не установлен! Установите его для использования этой функции.')
+			.addToggle((toggle) => {
+				toggle
+					.setValue(this.plugin.settings.useTemplater)
+					.setDisabled(!hasTemplater)
+					.onChange(async (value: boolean) => {
+						this.plugin.settings.useTemplater = value;
+						await this.plugin.saveSettings();
+					});
+			});
+
+		if (hasTemplater) {
+			new Setting(containerEl)
+				.setName('Папка с шаблонами Templater')
+				.setDesc('Укажи путь к папке, где хранятся шаблоны')
+				.addText((text) => {
+					text
+						.setPlaceholder('5. Utils/Templates')
+						.setValue(this.plugin.settings.templatesFolder)
+						.onChange(async (value: string) => {
+							this.plugin.settings.templatesFolder = value;
+							await this.plugin.saveSettings();
+						});
+
+					// Добавляем автодополнение папок
+					// @ts-ignore
+					text.inputEl.addEventListener('focus', () => {
+						const folders = this.app.vault.getAllLoadedFiles()
+							.filter((f): f is TFolder => f instanceof TFolder)
+							.map(f => f.path)
+							.sort();
+
+						// Добавляем datalist для автодополнения
+						// @ts-ignore
+						const dataList = document.createElement('datalist');
+						dataList.id = 'folder-suggestions';
+						folders.forEach(folder => {
+							const option = document.createElement('option');
+							option.value = folder;
+							dataList.appendChild(option);
+						});
+						// @ts-ignore
+						text.inputEl.setAttribute('list', 'folder-suggestions');
+
+						// Удаляем старый datalist если есть
+						const oldDatalist = document.getElementById('folder-suggestions');
+						if (oldDatalist) oldDatalist.remove();
+
+						document.body.appendChild(dataList);
+					});
+				});
+
+			new Setting(containerEl)
+				.setName('Шаблон для дневных заметок')
+				.setDesc('Имя файла шаблона (без расширения)')
+				.addText((text) => {
+					text
+						.setPlaceholder('FOR Dayly Notes planing')
+						.setValue(this.plugin.settings.dailyTemplate)
+						.onChange(async (value: string) => {
+							this.plugin.settings.dailyTemplate = value;
+							await this.plugin.saveSettings();
+						});
+				});
+
+			new Setting(containerEl)
+				.setName('Шаблон для недельных заметок')
+				.setDesc('Имя файла шаблона (без расширения)')
+				.addText((text) => {
+					text
+						.setPlaceholder('Weekly template')
+						.setValue(this.plugin.settings.weeklyTemplate)
+						.onChange(async (value: string) => {
+							this.plugin.settings.weeklyTemplate = value;
+							await this.plugin.saveSettings();
+						});
+				});
+
+			new Setting(containerEl)
+				.setName('Шаблон для месячных заметок')
+				.setDesc('Имя файла шаблона (без расширения)')
+				.addText((text) => {
+					text
+						.setPlaceholder('Monthly template')
+						.setValue(this.plugin.settings.monthlyTemplate)
+						.onChange(async (value: string) => {
+							this.plugin.settings.monthlyTemplate = value;
+							await this.plugin.saveSettings();
+						});
+				});
+		}
+
+		// Разделитель
+		containerEl.createEl('hr').style.margin = '20px 0';
+
+		containerEl.createEl('h3', { text: '📂 Папки и форматы' });
 
 		new Setting(containerEl)
 			.setName('Папки с заметками')
