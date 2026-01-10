@@ -3,7 +3,7 @@
 	"name": "Life Calendar",
 	"version": "1.0.0",
 	"minAppVersion": "0.15.0",
-	"description": "Personal journal calendar with statistics, retrospectives, and period tracking (day/week/month/quarter/year)",
+	"description": "Personal journal calendar with statistics, retrospectives, and period tracking.",
 	"author": "Ivan Zhukov",
 	"authorUrl": "https://github.com/Garogaro1",
 	"isDesktopOnly": false
