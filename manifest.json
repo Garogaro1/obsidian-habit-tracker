@@ -3,8 +3,8 @@
 	"name": "Трекер Привычек",
 	"version": "1.0.0",
 	"minAppVersion": "0.15.0",
-	"description": "Календарь и статистика для daily notes с трекингом привычек",
+	"description": "Calendar and statistics for daily notes with habit tracking",
 	"author": "Ivan Zhukov",
-	"authorUrl": "https://github.com",
+	"authorUrl": "https://github.com/Garogaro1",
 	"isDesktopOnly": false
 }
