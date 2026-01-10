@@ -1,0 +1,6 @@
+		// Регистрируем обработчик событий vault для автообновления
+		this.registerVaultEvent();
+		await Promise.resolve();
+	}
+
+	registerVaultEvent() {

@@ -188,7 +188,7 @@ export class HabitTrackerView extends ItemView {
 			quarterCard.createEl('div', { cls: 'quarter-badge-pano', text: '✅ Есть заметка' });
 
 			quarterCard.onmouseenter = () => {
-				void (async () => {
+				(async () => {
 					try {
 						const content = await this.plugin.app.vault.read(quarterFile);
 						const preview = content.slice(0, 150).replace(/[#*`]/g, '');
@@ -196,7 +196,7 @@ export class HabitTrackerView extends ItemView {
 					} catch (error) {
 						console.error('Error reading file:', error);
 					}
-				})();
+				})().catch(() => {});
 			};
 
 			quarterCard.onclick = () => this.plugin.app.workspace.openLinkText(quarterFile.path, '', true);
@@ -259,7 +259,7 @@ export class HabitTrackerView extends ItemView {
 			if (note) {
 				// Preview при наведении
 				cell.onmouseenter = () => {
-					void (async () => {
+					(async () => {
 						try {
 							const content = await this.plugin.app.vault.read(note.file);
 							const preview = content.slice(0, 150).replace(/[#*`]/g, '');
@@ -267,7 +267,7 @@ export class HabitTrackerView extends ItemView {
 						} catch (error) {
 							console.error('Error reading file:', error);
 						}
-					})();
+					})().catch(() => {});
 				};
 
 				cell.onclick = () => this.plugin.app.workspace.openLinkText(note.file.path, '', true);
@@ -297,7 +297,7 @@ export class HabitTrackerView extends ItemView {
 			monthIcon.textContent = '📋';
 
 			monthIcon.onmouseenter = () => {
-				void (async () => {
+				(async () => {
 					try {
 						const content = await this.plugin.app.vault.read(monthFile);
 						const preview = content.slice(0, 100).replace(/[#*`]/g, '');
@@ -305,7 +305,7 @@ export class HabitTrackerView extends ItemView {
 					} catch (error) {
 						console.error('Error reading file:', error);
 					}
-				})();
+				})().catch(() => {});
 			};
 
 			monthIcon.onclick = () => this.plugin.app.workspace.openLinkText(monthFile.path, '', true);
@@ -367,7 +367,7 @@ export class HabitTrackerView extends ItemView {
 						cell.addClass(`type-${note.type}`);
 
 						cell.onmouseenter = () => {
-							void (async () => {
+							(async () => {
 								try {
 									const content = await this.plugin.app.vault.read(note.file);
 									const preview = content.slice(0, 150).replace(/[#*`]/g, '');
@@ -375,7 +375,7 @@ export class HabitTrackerView extends ItemView {
 								} catch (error) {
 									console.error('Error reading file:', error);
 								}
-							})();
+							})().catch(() => {});
 						};
 
 						cell.onclick = () => this.plugin.app.workspace.openLinkText(note.file.path, '', true);
@@ -404,7 +404,7 @@ export class HabitTrackerView extends ItemView {
 					weekCell.createEl('div', { cls: 'week-number', text: `W${weekNum.toString().padStart(2, '0')}` });
 
 					weekCell.onmouseenter = () => {
-						void (async () => {
+						(async () => {
 							try {
 								const content = await this.plugin.app.vault.read(weekFile);
 								const preview = content.slice(0, 80).replace(/[#*`]/g, '');
@@ -412,7 +412,7 @@ export class HabitTrackerView extends ItemView {
 							} catch (error) {
 								console.error('Error reading file:', error);
 							}
-						})();
+						})().catch(() => {});
 					};
 
 					weekCell.onclick = () => this.plugin.app.workspace.openLinkText(weekFile.path, '', true);
@@ -480,7 +480,7 @@ export class HabitTrackerView extends ItemView {
 				quarterCard.createEl('div', { cls: 'quarter-badge', text: '✅ Есть заметка' });
 
 				quarterCard.onmouseenter = () => {
-					void (async () => {
+					(async () => {
 						try {
 							const content = await this.plugin.app.vault.read(quarterFile);
 							const preview = content.slice(0, 150).replace(/[#*`]/g, '');
@@ -488,7 +488,7 @@ export class HabitTrackerView extends ItemView {
 						} catch (error) {
 							console.error('Error reading file:', error);
 						}
-					})();
+					})().catch(() => {});
 				};
 
 				quarterCard.onclick = () => this.plugin.app.workspace.openLinkText(quarterFile.path, '', true);
@@ -542,7 +542,7 @@ export class HabitTrackerView extends ItemView {
 				monthCard.addClass('periodic-month-has-note');
 
 				monthCard.onmouseenter = () => {
-					void (async () => {
+					(async () => {
 						try {
 							const content = await this.plugin.app.vault.read(monthFile);
 							const preview = content.slice(0, 150).replace(/[#*`]/g, '');
@@ -550,7 +550,7 @@ export class HabitTrackerView extends ItemView {
 						} catch (error) {
 							console.error('Error reading file:', error);
 						}
-					})();
+					})().catch(() => {});
 				};
 
 				monthCard.onclick = () => this.plugin.app.workspace.openLinkText(monthFile.path, '', true);
@@ -624,7 +624,7 @@ export class HabitTrackerView extends ItemView {
 
 				if (hasNote && file) {
 					weekBadge.onmouseenter = () => {
-						void (async () => {
+						(async () => {
 							try {
 								const content = await this.plugin.app.vault.read(file);
 								const preview = content.slice(0, 100).replace(/[#*`]/g, '');
@@ -632,7 +632,7 @@ export class HabitTrackerView extends ItemView {
 							} catch (error) {
 								console.error('Error reading file:', error);
 							}
-						})();
+						})().catch(() => {});
 					};
 
 					weekBadge.onclick = () => this.plugin.app.workspace.openLinkText(file.path, '', true);
@@ -678,7 +678,7 @@ export class HabitTrackerView extends ItemView {
 				yearCard.createEl('div', { cls: 'year-badge', text: '✅ Есть' });
 
 				yearCard.onmouseenter = () => {
-					void (async () => {
+					(async () => {
 						try {
 							const content = await this.plugin.app.vault.read(yearFile);
 							const preview = content.slice(0, 150).replace(/[#*`]/g, '');
@@ -686,7 +686,7 @@ export class HabitTrackerView extends ItemView {
 						} catch (error) {
 							console.error('Error reading file:', error);
 						}
-					})();
+					})().catch(() => {});
 				};
 
 				yearCard.onclick = () => this.plugin.app.workspace.openLinkText(yearFile.path, '', true);
@@ -1001,17 +1001,17 @@ export class HabitTrackerView extends ItemView {
 		const preview = box.createEl('div', { cls: 'memory-preview' });
 
 		btnDay.onclick = () => {
-			void (async () => {
+			(() => {
 				const notes = getNotesOnThisDay(this.dailyNotes);
 				if(notes.length) this.showPreview(notes[0], preview);
 				else { preview.empty(); preview.createEl('span', { text: 'Пусто...' }); }
 			})();
 		};
 		btnRnd.onclick = () => {
-			void (async () => {
+			(async () => {
 				const note = await getRandomQualityNote(this.plugin.app, this.dailyNotes);
 				if(note) this.showPreview(note, preview);
-			})();
+			})().catch(() => {});
 		};
 
 		btnDay.click(); // Автозагрузка

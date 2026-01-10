@@ -1,0 +1,31 @@
+{
+  "env": {
+    "browser": true,
+    "es2021": true,
+    "node": true
+  },
+  "extends": ["eslint:recommended"],
+  "parserOptions": {
+    "ecmaVersion": 2020,
+    "sourceType": "module"
+  },
+  "rules": {
+    "require-await": "error",
+    "no-promise-executor-return": "error",
+    "no-unused-vars": "warn"
+  },
+  "overrides": [
+    {
+      "files": ["main.js"],
+      "env": {
+        "browser": true,
+        "node": false
+      },
+      "globals": {
+        "module": "readonly",
+        "require": "readonly",
+        "exports": "readonly"
+      }
+    }
+  ]
+}
