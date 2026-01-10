@@ -1,4 +1,4 @@
-import { ItemView, WorkspaceLeaf, TFile, moment } from 'obsidian';
+import { App, EventRef, ItemView, Setting, WorkspaceLeaf, TFile, moment } from 'obsidian';
 import { generateCalendar, getMonthName } from './calendar';
 import { calculateStatistics, HabitStats, getNotesOnThisDay, getRandomQualityNote } from './stats';
 
@@ -13,8 +13,8 @@ interface IHabitPlugin {
 		weeklyTemplate: string;
 		monthlyTemplate: string;
 	};
-	app: any;
-	templater: any;
+	app: App;
+	templater: unknown;
 }
 
 export const VIEW_TYPE_HABIT_TRACKER = 'habit-tracker-view';
@@ -27,7 +27,7 @@ export class HabitTrackerView extends ItemView {
 	dailyNotes: TFile[] = [];
 	stats: HabitStats;
 	viewMode: ViewMode = 'panorama';
-	private eventRef: any;
+	private eventRef: EventRef;
 
 	constructor(leaf: WorkspaceLeaf, plugin: IHabitPlugin) {
 		super(leaf);
@@ -113,8 +113,7 @@ export class HabitTrackerView extends ItemView {
 	}
 
 	render() {
-		const container = this.containerEl.children[1] as HTMLElement;
-		if (!container) return;
+		const container = this.containerEl;
 		container.empty();
 		container.addClass('habit-tracker-container');
 

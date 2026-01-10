@@ -140,6 +140,7 @@ export default class HabitTrackerPlugin extends Plugin {
 
 class HabitTrackerSettingTab extends PluginSettingTab {
 	plugin: HabitTrackerPlugin;
+	private focusHandler: (() => void) | null = null;
 
 	constructor(app: App, plugin: HabitTrackerPlugin) {
 		super(app, plugin);
@@ -149,6 +150,10 @@ class HabitTrackerSettingTab extends PluginSettingTab {
 	display(): void {
 		const { containerEl } = this;
 		containerEl.empty();
+
+		// Remove old datalist if exists (fixes overlay bug when switching tabs)
+		const oldDatalist = document.getElementById('folder-suggestions');
+		if (oldDatalist) oldDatalist.remove();
 
 		containerEl.createEl('h3', { text: 'Источники данных' });
 
@@ -186,12 +191,22 @@ class HabitTrackerSettingTab extends PluginSettingTab {
 						});
 
 					// Добавляем автодополнение папок
-					// @ts-ignore
-					text.inputEl.addEventListener('focus', () => {
+					// Удаляем старый handler если есть
+					if (this.focusHandler) {
+						// @ts-ignore
+						text.inputEl.removeEventListener('focus', this.focusHandler);
+					}
+
+					// Создаём и сохраняем новый handler
+					this.focusHandler = () => {
 						const folders = this.app.vault.getAllLoadedFiles()
 							.filter((f): f is TFolder => f instanceof TFolder)
 							.map(f => f.path)
 							.sort();
+
+						// Удаляем старый datalist если есть
+						const oldDatalist = document.getElementById('folder-suggestions');
+						if (oldDatalist) oldDatalist.remove();
 
 						// Добавляем datalist для автодополнения
 						// @ts-ignore
@@ -205,12 +220,11 @@ class HabitTrackerSettingTab extends PluginSettingTab {
 						// @ts-ignore
 						text.inputEl.setAttribute('list', 'folder-suggestions');
 
-						// Удаляем старый datalist если есть
-						const oldDatalist = document.getElementById('folder-suggestions');
-						if (oldDatalist) oldDatalist.remove();
-
 						document.body.appendChild(dataList);
-					});
+					};
+
+					// @ts-ignore
+					text.inputEl.addEventListener('focus', this.focusHandler);
 				});
 
 			new Setting(containerEl)

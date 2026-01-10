@@ -1,4 +1,4 @@
-import { TFile, moment } from 'obsidian';
+import { App, TFile, moment } from 'obsidian';
 
 export interface HabitStats {
 	lastNoteDate: string;
@@ -98,7 +98,7 @@ export function getNotesOnThisDay(notes: TFile[]): TFile[] {
 	});
 }
 
-export async function getRandomQualityNote(app: any, notes: TFile[]): Promise<TFile | null> {
+export async function getRandomQualityNote(app: App, notes: TFile[]): Promise<TFile | null> {
 	if (notes.length === 0) return null;
 	for (let i = 0; i < 5; i++) {
 		const randomNote = notes[Math.floor(Math.random() * notes.length)];
