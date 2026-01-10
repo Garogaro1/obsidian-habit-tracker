@@ -1,0 +1,20 @@
+## Life Calendar v1.0.0
+
+Personal journal calendar with statistics and retrospectives for Obsidian.
+
+### Features
+- Calendar view for daily notes
+- Streak tracking
+- Statistics dashboard
+- Periodic notes support (day/week/month/quarter/year)
+- Retrospectives ("memory" module)
+- Templater integration
+- Russian language interface
+
+### Installation
+Download the files from this release and extract them to `.obsidian/plugins/life-calendar/` in your vault.
+
+### Usage
+1. Enable the plugin in Settings → Community plugins
+2. Open the plugin via command palette: "Life Calendar: Open view"
+3. Configure your daily notes folder in plugin settings

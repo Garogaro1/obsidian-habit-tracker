@@ -674,12 +674,12 @@ export class HabitTrackerView extends ItemView {
 
 		const yearRow = table.createEl('div', { cls: 'overview-year-row' });
 		const yearCell = yearRow.createEl('div', { cls: `overview-cell overview-year ${yearFile ? 'has-note' : ''}` });
-		yearCell.innerHTML = `<strong>${currentYear}</strong>`;
+		yearCell.createEl('strong', { text: String(currentYear) });
 		if (yearFile) {
-			yearCell.innerHTML += ' <span class="note-mark">📋</span>';
+			yearCell.createEl('span', { cls: 'note-mark', text: '📋' });
 			yearCell.onclick = () => this.plugin.app.workspace.openLinkText(yearFile.path, '', true);
 		} else {
-			yearCell.innerHTML += ' <span class="note-mark-empty">+</span>';
+			yearCell.createEl('span', { cls: 'note-mark-empty', text: '+' });
 			yearCell.onclick = () => {
 				const folders = this.plugin.settings.watchedFolders.split('\n');
 				this.createNoteIfNotExists(`${folders[0].trim()}/${currentYear}.md`);
@@ -734,9 +734,9 @@ export class HabitTrackerView extends ItemView {
 			const monthCell = monthsGrid.createEl('div', { cls: `overview-month ${monthFile ? 'has-note' : ''}` });
 
 			const monthName = getMonthName(moment().year(currentYear).month(m)).slice(0, 3);
-			monthCell.innerHTML = `<span class="month-name">${monthName}</span>`;
+			monthCell.createEl('span', { cls: 'month-name', text: monthName });
 			if (dayCount > 0) {
-				monthCell.innerHTML += `<span class="day-count">${dayCount}д</span>`;
+				monthCell.createEl('span', { cls: 'day-count', text: `${dayCount}д` });
 			}
 			if (monthFile) {
 				monthCell.classList.add('month-with-monthly-note');
@@ -766,13 +766,11 @@ export class HabitTrackerView extends ItemView {
 		statsSection.createEl('h4', { cls: 'overview-stats-title', text: `📊 Заметки за ${currentYear} год` });
 
 		const statsBadges = statsSection.createEl('div', { cls: 'overview-stats-badges' });
-		statsBadges.innerHTML = `
-			<span class="overview-stat-badge stat-day">📅 Дни: ${typeCounts.day}</span>
-			<span class="overview-stat-badge stat-week">📆 Недели: ${typeCounts.week}</span>
-			<span class="overview-stat-badge stat-month">🗓️ Месяцы: ${typeCounts.month}</span>
-			<span class="overview-stat-badge stat-quarter">📊 Кварталы: ${typeCounts.quarter}</span>
-			<span class="overview-stat-badge stat-year">🎯 Годы: ${typeCounts.year}</span>
-		`;
+		statsBadges.createEl('span', { cls: 'overview-stat-badge stat-day', text: `📅 Дни: ${typeCounts.day}` });
+		statsBadges.createEl('span', { cls: 'overview-stat-badge stat-week', text: `📆 Недели: ${typeCounts.week}` });
+		statsBadges.createEl('span', { cls: 'overview-stat-badge stat-month', text: `🗓️ Месяцы: ${typeCounts.month}` });
+		statsBadges.createEl('span', { cls: 'overview-stat-badge stat-quarter', text: `📊 Кварталы: ${typeCounts.quarter}` });
+		statsBadges.createEl('span', { cls: 'overview-stat-badge stat-year', text: `🎯 Годы: ${typeCounts.year}` });
 	}
 
 	async createNoteIfNotExists(path: string) {
@@ -841,9 +839,9 @@ export class HabitTrackerView extends ItemView {
 		box.createEl('h3', { text: '📈 Прогресс' });
 
 		// Базовые метрики
-		box.createEl('p', { cls: 'stat-item' }).innerHTML = `<strong>🔥 Текущая серия:</strong> ${this.stats.currentStreak} дн.`;
-		box.createEl('p', { cls: 'stat-item' }).innerHTML = `<strong>📅 Последняя запись:</strong> ${this.stats.lastNoteDate}`;
-		box.createEl('p', { cls: 'stat-item' }).innerHTML = `<strong>⏰ Прошло времени:</strong> ${this.stats.timeSinceLastNote}`;
+		box.createEl('p', { cls: 'stat-item' }).createEl('strong', { text: `🔥 Текущая серия: ${this.stats.currentStreak} дн.` });
+		box.createEl('p', { cls: 'stat-item' }).createEl('strong', { text: `📅 Последняя запись: ${this.stats.lastNoteDate}` });
+		box.createEl('p', { cls: 'stat-item' }).createEl('strong', { text: `⏰ Прошло времени: ${this.stats.timeSinceLastNote}` });
 
 		// Разделитель
 		box.createEl('hr', { cls: 'stat-divider' });
@@ -885,7 +883,7 @@ export class HabitTrackerView extends ItemView {
 
 		// Всего заметок
 		box.createEl('hr', { cls: 'stat-divider' });
-		box.createEl('p', { cls: 'stat-item' }).innerHTML = `<strong>📝 Всего заметок:</strong> ${this.dailyNotes.length}`;
+		box.createEl('p', { cls: 'stat-item' }).createEl('strong', { text: `📝 Всего заметок: ${this.dailyNotes.length}` });
 
 		// Сравнение заполнения предыдущего и текущего года
 		const currentYear = moment().year();
@@ -922,15 +920,16 @@ export class HabitTrackerView extends ItemView {
 
 		// Компактное сравнение
 		const compareRow = box.createEl('div', { cls: 'stat-year-compare' });
-		compareRow.innerHTML = `
-			<strong>📈 Заполнение:</strong><br>
-			<span class="stat-compare-item">
-				<strong>${lastYear}:</strong> ${lastYearFillPercentage}% (${lastYearDayNotes}/${daysInLastYear})
-			</span>
-			<span class="stat-compare-item">
-				<strong>${currentYear}:</strong> ${currentYearFillPercentage}% (${currentYearDayNotes}/${daysPassed})
-			</span>
-		`;
+		compareRow.createEl('strong', { text: '📈 Заполнение:' });
+		compareRow.createEl('br');
+
+		const span1 = compareRow.createEl('span', { cls: 'stat-compare-item' });
+		span1.createEl('strong', { text: `${lastYear}: ` });
+		span1.appendText(`${lastYearFillPercentage}% (${lastYearDayNotes}/${daysInLastYear})`);
+
+		const span2 = compareRow.createEl('span', { cls: 'stat-compare-item' });
+		span2.createEl('strong', { text: `${currentYear}: ` });
+		span2.appendText(`${currentYearFillPercentage}% (${currentYearDayNotes}/${daysPassed})`);
 	}
 
 	renderRetroModule(container: HTMLElement) {

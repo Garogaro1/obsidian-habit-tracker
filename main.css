@@ -884,3 +884,14 @@
   pointer-events: none;
   line-height: 1.5;
 }
+.habit-tracker-divider {
+  margin: 20px 0;
+}
+.habit-tracker-help {
+  margin-top: 20px;
+  padding: 10px;
+  background: var(--background-secondary);
+  border-radius: 5px;
+  font-size: 0.9em;
+  color: var(--text-muted);
+}

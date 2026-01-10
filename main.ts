@@ -39,10 +39,10 @@ const DEFAULT_SETTINGS: HabitTrackerSettings = {
 
 export default class HabitTrackerPlugin extends Plugin {
 	settings: HabitTrackerSettings;
-	templater: any; // Templater API
+	templater: unknown; // Templater API
 
 	async onload() {
-		console.log('Загрузка плагина Трекер Привычек');
+		console.debug('Загрузка плагина Life Calendar');
 
 		// Загрузка настроек
 		await this.loadSettings();
@@ -76,7 +76,7 @@ export default class HabitTrackerPlugin extends Plugin {
 	}
 
 	onunload() {
-		console.log('Выгрузка плагина Трекер Привычек');
+		console.debug('Выгрузка плагина Life Calendar');
 	}
 
 	async loadSettings() {
@@ -254,7 +254,7 @@ class HabitTrackerSettingTab extends PluginSettingTab {
 		}
 
 		// Разделитель
-		containerEl.createEl('hr').style.margin = '20px 0';
+		containerEl.createEl('hr', { cls: 'habit-tracker-divider' });
 
 		containerEl.createEl('h3', { text: '📂 Папки и форматы' });
 
@@ -289,25 +289,17 @@ class HabitTrackerSettingTab extends PluginSettingTab {
 			});
 
 		// Справка по форматам
-		const helpDiv = containerEl.createEl('div');
-		helpDiv.style.marginTop = '20px';
-		helpDiv.style.padding = '10px';
-		helpDiv.style.background = 'var(--background-secondary)';
-		helpDiv.style.borderRadius = '5px';
-		helpDiv.style.fontSize = '0.9em';
-		helpDiv.style.color = 'var(--text-muted)';
+		const helpDiv = containerEl.createEl('div', { cls: 'habit-tracker-help' });
 
 		helpDiv.createEl('h4', { text: '📖 Поддерживаемые форматы:' });
-		const p1 = helpDiv.createEl('p');
-		p1.innerHTML = '<strong>Дневные заметки:</strong>';
+		helpDiv.createEl('p').createEl('strong', { text: 'Дневные заметки:' });
 		helpDiv.createEl('ul', {}, ul => {
 			ul.createEl('li', { text: 'DD.MM.YY — 30.12.24' });
 			ul.createEl('li', { text: 'DD.MM.YYYY — 30.12.2024' });
 			ul.createEl('li', { text: 'YYYY-MM-DD — 2024-12-30' });
 		});
 
-		const p2 = helpDiv.createEl('p');
-		p2.innerHTML = '<strong>Периодические заметки:</strong>';
+		helpDiv.createEl('p').createEl('strong', { text: 'Периодические заметки:' });
 		helpDiv.createEl('ul', {}, ul => {
 			ul.createEl('li', { text: 'gggg-[W]ww — 2024-W01 (Неделя, отображается в понедельник)' });
 			ul.createEl('li', { text: 'YYYY-MM — 2024-12 (Месяц, отображается 1-го числа)' });
