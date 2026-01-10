@@ -184,9 +184,13 @@ export class HabitTrackerView extends ItemView {
 			quarterCard.createEl('div', { cls: 'quarter-badge-pano', text: '✅ Есть заметка' });
 
 			quarterCard.onmouseenter = async () => {
-				const content = await this.plugin.app.vault.read(quarterFile);
-				const preview = content.slice(0, 150).replace(/[#*`]/g, '');
-				quarterCard.setAttribute('data-preview', preview + (content.length > 150 ? '...' : ''));
+				try {
+					const content = await this.plugin.app.vault.read(quarterFile);
+					const preview = content.slice(0, 150).replace(/[#*`]/g, '');
+					quarterCard.setAttribute('data-preview', preview + (content.length > 150 ? '...' : ''));
+				} catch (error) {
+					console.error('Error reading file:', error);
+				}
 			};
 
 			quarterCard.onclick = () => this.plugin.app.workspace.openLinkText(quarterFile.path, '', true);
@@ -249,9 +253,13 @@ export class HabitTrackerView extends ItemView {
 			if (note) {
 				// Preview при наведении
 				cell.onmouseenter = async () => {
-					const content = await this.plugin.app.vault.read(note.file);
-					const preview = content.slice(0, 150).replace(/[#*`]/g, '');
-					cell.setAttribute('data-preview', preview + (content.length > 150 ? '...' : ''));
+					try {
+						const content = await this.plugin.app.vault.read(note.file);
+						const preview = content.slice(0, 150).replace(/[#*`]/g, '');
+						cell.setAttribute('data-preview', preview + (content.length > 150 ? '...' : ''));
+					} catch (error) {
+						console.error('Error reading file:', error);
+					}
 				};
 
 				cell.onclick = () => this.plugin.app.workspace.openLinkText(note.file.path, '', true);
@@ -264,7 +272,7 @@ export class HabitTrackerView extends ItemView {
 
 		// Заголовок месяца с месячной заметкой
 		const monthHeader = box.createEl('div', { cls: 'month-header-row' });
-		monthHeader.createEl('h4', { cls: 'month-label', text: `${getMonthName(date)} ${date.year()}` });
+		new Setting(monthHeader).setHeading().setName(`${getMonthName(date)} ${date.year()}`).settingEl.addClass('month-label');
 
 		// Ищем месячную заметку
 		const monthFile = this.dailyNotes.find(file => {
@@ -281,9 +289,13 @@ export class HabitTrackerView extends ItemView {
 			monthIcon.textContent = '📋';
 
 			monthIcon.onmouseenter = async () => {
-				const content = await this.plugin.app.vault.read(monthFile);
-				const preview = content.slice(0, 100).replace(/[#*`]/g, '');
-				monthIcon.setAttribute('data-preview', preview + (content.length > 100 ? '...' : ''));
+				try {
+					const content = await this.plugin.app.vault.read(monthFile);
+					const preview = content.slice(0, 100).replace(/[#*`]/g, '');
+					monthIcon.setAttribute('data-preview', preview + (content.length > 100 ? '...' : ''));
+				} catch (error) {
+					console.error('Error reading file:', error);
+				}
 			};
 
 			monthIcon.onclick = () => this.plugin.app.workspace.openLinkText(monthFile.path, '', true);
@@ -345,9 +357,13 @@ export class HabitTrackerView extends ItemView {
 						cell.addClass(`type-${note.type}`);
 
 						cell.onmouseenter = async () => {
-							const content = await this.plugin.app.vault.read(note.file);
-							const preview = content.slice(0, 150).replace(/[#*`]/g, '');
-							cell.setAttribute('data-preview', preview + (content.length > 150 ? '...' : ''));
+							try {
+								const content = await this.plugin.app.vault.read(note.file);
+								const preview = content.slice(0, 150).replace(/[#*`]/g, '');
+								cell.setAttribute('data-preview', preview + (content.length > 150 ? '...' : ''));
+							} catch (error) {
+								console.error('Error reading file:', error);
+							}
 						};
 
 						cell.onclick = () => this.plugin.app.workspace.openLinkText(note.file.path, '', true);
@@ -376,9 +392,13 @@ export class HabitTrackerView extends ItemView {
 					weekCell.createEl('div', { cls: 'week-number', text: `W${weekNum.toString().padStart(2, '0')}` });
 
 					weekCell.onmouseenter = async () => {
-						const content = await this.plugin.app.vault.read(weekFile);
-						const preview = content.slice(0, 80).replace(/[#*`]/g, '');
-						weekCell.setAttribute('data-preview', preview + (content.length > 80 ? '...' : ''));
+						try {
+							const content = await this.plugin.app.vault.read(weekFile);
+							const preview = content.slice(0, 80).replace(/[#*`]/g, '');
+							weekCell.setAttribute('data-preview', preview + (content.length > 80 ? '...' : ''));
+						} catch (error) {
+							console.error('Error reading file:', error);
+						}
 					};
 
 					weekCell.onclick = () => this.plugin.app.workspace.openLinkText(weekFile.path, '', true);
@@ -406,7 +426,7 @@ export class HabitTrackerView extends ItemView {
 		// Навигация по годам
 		const nav = wrapper.createEl('div', { cls: 'panorama-nav' });
 		const currentYear = this.currentDate.year();
-		nav.createEl('h3', { cls: 'heatmap-year-title', text: `Кварталы ${currentYear}` });
+		new Setting(nav).setHeading().setName(`Кварталы ${currentYear}`).settingEl.addClass('heatmap-year-title');
 
 		nav.createEl('button', { text: '◀ Пред. год', cls: 'mode-btn' }).onclick = () => {
 			this.currentDate.subtract(1, 'year');
@@ -446,9 +466,13 @@ export class HabitTrackerView extends ItemView {
 				quarterCard.createEl('div', { cls: 'quarter-badge', text: '✅ Есть заметка' });
 
 				quarterCard.onmouseenter = async () => {
-					const content = await this.plugin.app.vault.read(quarterFile);
-					const preview = content.slice(0, 150).replace(/[#*`]/g, '');
-					quarterCard.setAttribute('data-preview', preview + (content.length > 150 ? '...' : ''));
+					try {
+						const content = await this.plugin.app.vault.read(quarterFile);
+						const preview = content.slice(0, 150).replace(/[#*`]/g, '');
+						quarterCard.setAttribute('data-preview', preview + (content.length > 150 ? '...' : ''));
+					} catch (error) {
+						console.error('Error reading file:', error);
+					}
 				};
 
 				quarterCard.onclick = () => this.plugin.app.workspace.openLinkText(quarterFile.path, '', true);
@@ -470,7 +494,7 @@ export class HabitTrackerView extends ItemView {
 		// Навигация по годам
 		const nav = wrapper.createEl('div', { cls: 'panorama-nav' });
 		const currentYear = this.currentDate.year();
-		nav.createEl('h3', { cls: 'heatmap-year-title', text: `Месяцы ${currentYear}` });
+		new Setting(nav).setHeading().setName(`Месяцы ${currentYear}`).settingEl.addClass('heatmap-year-title');
 
 		nav.createEl('button', { text: '◀ Пред. год', cls: 'mode-btn' }).onclick = () => {
 			this.currentDate.subtract(1, 'year');
@@ -502,9 +526,13 @@ export class HabitTrackerView extends ItemView {
 				monthCard.addClass('periodic-month-has-note');
 
 				monthCard.onmouseenter = async () => {
-					const content = await this.plugin.app.vault.read(monthFile);
-					const preview = content.slice(0, 150).replace(/[#*`]/g, '');
-					monthCard.setAttribute('data-preview', preview + (content.length > 150 ? '...' : ''));
+					try {
+						const content = await this.plugin.app.vault.read(monthFile);
+						const preview = content.slice(0, 150).replace(/[#*`]/g, '');
+						monthCard.setAttribute('data-preview', preview + (content.length > 150 ? '...' : ''));
+					} catch (error) {
+						console.error('Error reading file:', error);
+					}
 				};
 
 				monthCard.onclick = () => this.plugin.app.workspace.openLinkText(monthFile.path, '', true);
@@ -525,7 +553,7 @@ export class HabitTrackerView extends ItemView {
 		// Навигация по годам
 		const nav = wrapper.createEl('div', { cls: 'panorama-nav' });
 		const currentYear = this.currentDate.year();
-		nav.createEl('h3', { cls: 'heatmap-year-title', text: `Недели ${currentYear}` });
+		new Setting(nav).setHeading().setName(`Недели ${currentYear}`).settingEl.addClass('heatmap-year-title');
 
 		nav.createEl('button', { text: '◀ Пред. год', cls: 'mode-btn' }).onclick = () => {
 			this.currentDate.subtract(1, 'year');
@@ -578,9 +606,13 @@ export class HabitTrackerView extends ItemView {
 
 				if (hasNote && file) {
 					weekBadge.onmouseenter = async () => {
-						const content = await this.plugin.app.vault.read(file);
-						const preview = content.slice(0, 100).replace(/[#*`]/g, '');
-						weekBadge.setAttribute('data-preview', preview + (content.length > 100 ? '...' : ''));
+						try {
+							const content = await this.plugin.app.vault.read(file);
+							const preview = content.slice(0, 100).replace(/[#*`]/g, '');
+							weekBadge.setAttribute('data-preview', preview + (content.length > 100 ? '...' : ''));
+						} catch (error) {
+							console.error('Error reading file:', error);
+						}
 					};
 
 					weekBadge.onclick = () => this.plugin.app.workspace.openLinkText(file.path, '', true);
@@ -596,7 +628,7 @@ export class HabitTrackerView extends ItemView {
 		// Навигация
 		const nav = wrapper.createEl('div', { cls: 'panorama-nav' });
 		const currentYear = this.currentDate.year();
-		nav.createEl('h3', { cls: 'heatmap-year-title', text: 'Годы' });
+		new Setting(nav).setHeading().setName('Годы').settingEl.addClass('heatmap-year-title');
 
 		nav.createEl('button', { text: '◀ На 5 лет назад', cls: 'mode-btn' }).onclick = () => {
 			this.currentDate.subtract(5, 'year');
@@ -626,9 +658,13 @@ export class HabitTrackerView extends ItemView {
 				yearCard.createEl('div', { cls: 'year-badge', text: '✅ Есть' });
 
 				yearCard.onmouseenter = async () => {
-					const content = await this.plugin.app.vault.read(yearFile);
-					const preview = content.slice(0, 150).replace(/[#*`]/g, '');
-					yearCard.setAttribute('data-preview', preview + (content.length > 150 ? '...' : ''));
+					try {
+						const content = await this.plugin.app.vault.read(yearFile);
+						const preview = content.slice(0, 150).replace(/[#*`]/g, '');
+						yearCard.setAttribute('data-preview', preview + (content.length > 150 ? '...' : ''));
+					} catch (error) {
+						console.error('Error reading file:', error);
+					}
 				};
 
 				yearCard.onclick = () => this.plugin.app.workspace.openLinkText(yearFile.path, '', true);
@@ -649,7 +685,7 @@ export class HabitTrackerView extends ItemView {
 
 		// Навигация по годам
 		const nav = wrapper.createEl('div', { cls: 'panorama-nav' });
-		const yearTitle = nav.createEl('h3', { cls: 'heatmap-year-title', text: `Обзор ${this.currentDate.year().toString()}` });
+		new Setting(nav).setHeading().setName(`Обзор ${this.currentDate.year().toString()}`).settingEl.addClass('heatmap-year-title');
 
 		nav.createEl('button', { text: '◀ Пред. год', cls: 'mode-btn' }).onclick = () => {
 			this.currentDate.subtract(1, 'year');
@@ -762,7 +798,7 @@ export class HabitTrackerView extends ItemView {
 			}
 		});
 
-		statsSection.createEl('h4', { cls: 'overview-stats-title', text: `📊 Заметки за ${currentYear} год` });
+		new Setting(statsSection).setHeading().setName(`📊 Заметки за ${currentYear} год`).settingEl.addClass('overview-stats-title');
 
 		const statsBadges = statsSection.createEl('div', { cls: 'overview-stats-badges' });
 		statsBadges.createEl('span', { cls: 'overview-stat-badge stat-day', text: `📅 Дни: ${typeCounts.day}` });
@@ -835,7 +871,7 @@ export class HabitTrackerView extends ItemView {
 
 	renderStatistics(container: HTMLElement) {
 		const box = container.createEl('div', { cls: 'stats-container' });
-		box.createEl('h3', { text: '📈 Прогресс' });
+		new Setting(box).setHeading().setName('📈 Прогресс');
 
 		// Базовые метрики
 		box.createEl('p', { cls: 'stat-item' }).createEl('strong', { text: `🔥 Текущая серия: ${this.stats.currentStreak} дн.` });
@@ -934,7 +970,7 @@ export class HabitTrackerView extends ItemView {
 	renderRetroModule(container: HTMLElement) {
 		const box = container.createEl('div', { cls: 'memory-box' });
 		const head = box.createEl('div', { cls: 'retro-header' });
-		head.createEl('h3', { text: '🕰 Ретро' });
+		new Setting(head).setHeading().setName('🕰 Ретро');
 
 		const ctrls = box.createEl('div', { cls: 'retro-controls' });
 		const btnDay = ctrls.createEl('button', { cls: 'retro-btn', text: '📅 Этот день' });
@@ -956,19 +992,23 @@ export class HabitTrackerView extends ItemView {
 	}
 
 	async showPreview(file: TFile, container: HTMLElement) {
-		const content = await this.plugin.app.vault.read(file);
-		container.empty();
+		try {
+			const content = await this.plugin.app.vault.read(file);
+			container.empty();
 
-		// Заголовок с датой
-		container.createEl('h4', { cls: 'preview-date', text: file.name.replace('.md', '') });
+			// Заголовок с датой
+			new Setting(container).setHeading().setName(file.name.replace('.md', '')).settingEl.addClass('preview-date');
 
-		// Полный контент заметки
-		const contentEl = container.createEl('div', { cls: 'preview-content' });
-		contentEl.textContent = content;
+			// Полный контент заметки
+			const contentEl = container.createEl('div', { cls: 'preview-content' });
+			contentEl.textContent = content;
 
-		// Кнопка открытия
-		container.createEl('button', { cls: 'preview-open-button', text: '📂 Открыть в Obsidian' })
-			.onclick = () => this.plugin.app.workspace.openLinkText(file.path, '', true);
+			// Кнопка открытия
+			container.createEl('button', { cls: 'preview-open-button', text: '📂 Открыть в Obsidian' })
+				.onclick = () => this.plugin.app.workspace.openLinkText(file.path, '', true);
+		} catch (error) {
+			console.error('Error reading file:', error);
+		}
 	}
 
 	async createNote(dateStr: string) {

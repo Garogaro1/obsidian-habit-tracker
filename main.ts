@@ -155,12 +155,12 @@ class HabitTrackerSettingTab extends PluginSettingTab {
 		const oldDatalist = document.getElementById('folder-suggestions');
 		if (oldDatalist) oldDatalist.remove();
 
-		containerEl.createEl('h3', { text: 'Источники данных' });
+		new Setting(containerEl).setHeading().setName('Источники данных');
 
 		// ===== TEMPLATER INTEGRATION =====
 		const hasTemplater = this.plugin.templater !== undefined;
 
-		containerEl.createEl('h3', { text: '🎨 Templater Интеграция' });
+		new Setting(containerEl).setHeading().setName('🎨 Templater Интеграция');
 
 		new Setting(containerEl)
 			.setName('Использовать Templater')
@@ -270,7 +270,7 @@ class HabitTrackerSettingTab extends PluginSettingTab {
 		// Разделитель
 		containerEl.createEl('hr', { cls: 'habit-tracker-divider' });
 
-		containerEl.createEl('h3', { text: '📂 Папки и форматы' });
+		new Setting(containerEl).setHeading().setName('📂 Папки и форматы');
 
 		new Setting(containerEl)
 			.setName('Папки с заметками')
@@ -305,7 +305,7 @@ class HabitTrackerSettingTab extends PluginSettingTab {
 		// Справка по форматам
 		const helpDiv = containerEl.createEl('div', { cls: 'habit-tracker-help' });
 
-		helpDiv.createEl('h4', { text: '📖 Поддерживаемые форматы:' });
+		new Setting(helpDiv).setHeading().setName('📖 Поддерживаемые форматы:');
 		helpDiv.createEl('p').createEl('strong', { text: 'Дневные заметки:' });
 		helpDiv.createEl('ul', {}, ul => {
 			ul.createEl('li', { text: 'DD.MM.YY — 30.12.24' });
