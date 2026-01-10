@@ -98,19 +98,17 @@ export function getNotesOnThisDay(notes: TFile[]): TFile[] {
 	});
 }
 
-export function getRandomQualityNote(app: App, notes: TFile[]): Promise<TFile | null> {
-	if (notes.length === 0) return Promise.resolve(null);
+export async function getRandomQualityNote(app: App, notes: TFile[]): Promise<TFile | null> {
+	if (notes.length === 0) return null;
 
-	return (async () => {
-		for (let i = 0; i < 5; i++) {
-			try {
-				const randomNote = notes[Math.floor(Math.random() * notes.length)];
-				const content = await app.vault.read(randomNote);
-				if (content.length > 30) return randomNote;
-			} catch (error) {
-				console.error('Error reading file:', error);
-			}
+	for (let i = 0; i < 5; i++) {
+		try {
+			const randomNote = notes[Math.floor(Math.random() * notes.length)];
+			const content = await app.vault.read(randomNote);
+			if (content.length > 30) return randomNote;
+		} catch (error) {
+			console.error('Error reading file:', error);
 		}
-		return notes[Math.floor(Math.random() * notes.length)];
-	})();
+	}
+	return notes[Math.floor(Math.random() * notes.length)];
 }

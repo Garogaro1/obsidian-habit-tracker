@@ -43,6 +43,8 @@ export class HabitTrackerView extends ItemView {
 
 		// Регистрируем обработчик событий vault для автообновления
 		this.registerVaultEvent();
+
+		await Promise.resolve();
 	}
 
 	registerVaultEvent() {
@@ -76,6 +78,8 @@ export class HabitTrackerView extends ItemView {
 		if (this.eventRef) {
 			this.plugin.app.vault.offref(this.eventRef);
 		}
+
+		await Promise.resolve();
 	}
 
 	updateData() {
@@ -129,9 +133,9 @@ export class HabitTrackerView extends ItemView {
 		row.createEl('h2', { text: titles[this.viewMode] });
 
 		const switcher = row.createEl('div', { cls: 'mode-switcher' });
-		switcher.createEl('button', { text: '3 Мес', cls: `mode-btn ${this.viewMode === 'panorama' ? 'active' : ''}` })
+		switcher.createEl('button', { text: '3 мес', cls: `mode-btn ${this.viewMode === 'panorama' ? 'active' : ''}` })
 			.onclick = () => { this.viewMode = 'panorama'; this.render(); };
-		switcher.createEl('button', { text: 'Карта Года', cls: `mode-btn ${this.viewMode === 'year' ? 'active' : ''}` })
+		switcher.createEl('button', { text: 'Карта года', cls: `mode-btn ${this.viewMode === 'year' ? 'active' : ''}` })
 			.onclick = () => { this.viewMode = 'year'; this.render(); };
 		switcher.createEl('button', { text: 'Обзор', cls: `mode-btn ${this.viewMode === 'overview' ? 'active' : ''}` })
 			.onclick = () => { this.viewMode = 'overview'; this.render(); };
