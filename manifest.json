@@ -1,9 +1,9 @@
 {
-	"id": "habit-tracker",
-	"name": "Трекер Привычек",
+	"id": "life-calendar",
+	"name": "Life Calendar",
 	"version": "1.0.0",
 	"minAppVersion": "0.15.0",
-	"description": "Calendar and statistics for daily notes with habit tracking",
+	"description": "Personal journal calendar with statistics, retrospectives, and period tracking (day/week/month/quarter/year)",
 	"author": "Ivan Zhukov",
 	"authorUrl": "https://github.com/Garogaro1",
 	"isDesktopOnly": false
